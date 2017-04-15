@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+environment/project/0.545545923/PATH/delimiter=;
+environment/project/0.545545923/PATH/operation=replace
+environment/project/0.545545923/PATH/value=C\:/Program Files/Java/jre1.8.0_74/bin/client;C\:/Program Files/Java/jre1.8.0_74/bin;C\:/Program Files/Java/jre1.8.0_74/lib/i386;C\:\\Program Files\\Atmel\\AVR Tools\\AVR Toolchain\\bin;C\:\\ProgramData\\Oracle\\Java\\javapath;C\:\\Program Files\\NVIDIA Corporation\\PhysX\\Common;C\:\\Windows\\system32;C\:\\Windows;C\:\\Windows\\System32\\Wbem;C\:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C\:\\Program Files\\Skype\\Phone\\;C\:\\Coreutils\\bin\\;C\:\\STM32_Toolchain\\gcc-arm-none-eabi-5_3-151225\\bin\\;;C\:\\STM32_Toolchain\\eclipse;C\:\\STM32_Toolchain\\gcc-arm-none-eabi-5_3-151225\\bin;${Path}
+environment/project/0.545545923/append=true
+environment/project/0.545545923/appendContributed=true
