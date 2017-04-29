@@ -14,19 +14,31 @@ static void system_init(void);
 
 int main(void)
 {
-	volatile uint32_t count, count_max = 1000000;
-
+	SysTick_Config(4000000);
 	system_init();
 	sysclk_init();
 
-	gpio_pin_cfg(LED_GPIO, LED_pin, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
 
 	while (1)
 	{
-		for (count = 0; count < count_max; count++);	// delay
-		LED_bb = 1;
-		for (count = 0; count < count_max; count++);	// delay
-		LED_bb = 0;
+
+		if(GPIOC->IDR & GPIO_IDR_IDR13 )
+		{
+			LED2_bb = 0;
+		}
+		else
+		{
+			LED2_bb = 1;
+		}
+
+		if(GPIOA->IDR & GPIO_IDR_IDR8 )
+		{
+			LED3_bb = 1;
+		}
+		else
+		{
+			LED3_bb = 0;
+		}
 	}
 }
 
@@ -48,4 +60,26 @@ static void sysclk_init(void)
 static void system_init(void)
 {
 	gpio_init();
+
+	gpio_pin_cfg(LED1_GPIO, LED1_pin, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
+	gpio_pin_cfg(LED2_GPIO, LED2_pin, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
+	gpio_pin_cfg(LED3_GPIO, LED3_pin, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
+
+	GPIOA->BSRR = GPIO_BSRR_BS6;	// turn off LED2 by 3V3 (which is activated by 0V)
+	GPIOA->BSRR = GPIO_BSRR_BS7;	// turn off LED3 by 3V3 (which is activated by 0V)
+
+	gpio_pin_cfg(BUTTON1_GPIO, BUTTON1_pin, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
+	gpio_pin_cfg(BUTTON2_GPIO, BUTTON2_pin, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);
+	gpio_pin_cfg(BUTTON3_GPIO, BUTTON3_pin, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);
+
+	GPIOA->BSRR = GPIO_BSRR_BS8;	// pull up Button2
+	GPIOA->BSRR = GPIO_BSRR_BS9;	// pull up Button3
+
+}
+
+
+__attribute__ (( interrupt )) void SysTick_Handler(void)
+{
+//	LED1_bb ^= 1;
+	BB(GPIOA->ODR, P5) ^= 1;
 }
