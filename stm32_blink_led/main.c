@@ -22,16 +22,16 @@ int main(void)
 	while (1)
 	{
 
-		if(GPIOC->IDR & GPIO_IDR_IDR13 )
+		if( GPIOC->IDR & GPIO_IDR_IDR13 )    // check if button is press
 		{
-			LED2_bb = 0;
+			LED2_bb = 0;    // turn off diode
 		}
 		else
 		{
 			LED2_bb = 1;
 		}
 
-		if(GPIOA->IDR & GPIO_IDR_IDR8 )
+		if(GPIOA->IDR & GPIO_IDR_IDR8 )    // check if button is press
 		{
 			LED3_bb = 1;
 		}
