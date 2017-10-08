@@ -10,6 +10,7 @@
 
 static void sysclk_init(void);
 static void system_init(void);
+static void buttonInterruptInit(void);
 
 
 int main(void)
@@ -17,28 +18,12 @@ int main(void)
 	SysTick_Config(4000000);
 	system_init();
 	sysclk_init();
+	buttonInterruptInit();
 
 
 	while (1)
 	{
 
-		if( GPIOC->IDR & GPIO_IDR_IDR13 )    // check if button is press
-		{
-			LED2_bb = 0;    // turn off diode
-		}
-		else
-		{
-			LED2_bb = 1;
-		}
-
-		if(GPIOA->IDR & GPIO_IDR_IDR8 )    // check if button is press
-		{
-			LED3_bb = 1;
-		}
-		else
-		{
-			LED3_bb = 0;
-		}
 	}
 }
 
@@ -78,8 +63,42 @@ static void system_init(void)
 }
 
 
+static void buttonInterruptInit(void)
+{
+	AFIO->EXTICR[3] = AFIO_EXTICR3_EXTI8_PA| AFIO_EXTICR3_EXTI9_PA;
+	EXTI->IMR =  EXTI_EMR_MR8 | EXTI_IMR_MR9;    // configure interrupt mask
+	EXTI->FTSR =  EXTI_FTSR_TR8 | EXTI_FTSR_TR9;    // setting trigerring by falling edge
+	NVIC->ISER[0] = NVIC_ISER_SETENA_8 | NVIC_ISER_SETENA_9;    // Enable interrupt in NVIC
+	NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+}
+
+
 __attribute__ (( interrupt )) void SysTick_Handler(void)
 {
 //	LED1_bb ^= 1;
 	BB(GPIOA->ODR, P5) ^= 1;
 }
+
+
+__attribute__ (( interrupt )) void EXTI9_5_IRQHandler(void)
+{
+
+	if (EXTI->PR & EXTI_PR_PR8)
+	{
+		EXTI->PR = EXTI_PR_PR8;
+
+		//	LED3_bb ^= 1;
+		BB(GPIOA->ODR, P6) ^= 1;
+	}
+	else if (EXTI->PR & EXTI_PR_PR9)
+	{
+		EXTI->PR = EXTI_PR_PR9;
+
+		//	LED2_bb ^= 1;
+		BB(GPIOA->ODR, P7) ^= 1;
+	}
+
+
+}
+
