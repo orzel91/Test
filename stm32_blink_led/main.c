@@ -11,6 +11,7 @@
 static void sysclk_init(void);
 static void system_init(void);
 static void buttonInterruptInit(void);
+static void timerInit(void);
 
 
 int main(void)
@@ -19,6 +20,7 @@ int main(void)
 	system_init();
 	sysclk_init();
 	buttonInterruptInit();
+	timerInit();
 
 
 	while (1)
@@ -65,14 +67,26 @@ static void system_init(void)
 
 static void buttonInterruptInit(void)
 {
-	AFIO->EXTICR[3] = AFIO_EXTICR3_EXTI8_PA| AFIO_EXTICR3_EXTI9_PA;
-	EXTI->IMR =  EXTI_EMR_MR8 | EXTI_IMR_MR9;    // configure interrupt mask
-	EXTI->FTSR =  EXTI_FTSR_TR8 | EXTI_FTSR_TR9;    // setting trigerring by falling edge
-	NVIC->ISER[0] = NVIC_ISER_SETENA_8 | NVIC_ISER_SETENA_9;    // Enable interrupt in NVIC
+	AFIO->EXTICR[3] = AFIO_EXTICR3_EXTI8_PA;    // alternative function on pin PA8 and PA9
+	EXTI->IMR =  EXTI_EMR_MR8;    // configure interrupt mask
+	EXTI->FTSR =  EXTI_FTSR_TR8;    // setting trigerring by falling edge
+	NVIC->ISER[0] = NVIC_ISER_SETENA_8;    // Enable interrupt in NVIC
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
+
+static void timerInit(void)
+{
+//	TIM1->CR1 =TIM_CR1_DIR;    // Counter used as downcounter
+	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+	NVIC_EnableIRQ(TIM1_UP_IRQn);    // TIM1 Update Interrupt
+	TIM1->DIER = TIM_DIER_UIE;    // Update interrupt enable
+	TIM1->PSC = 1000;
+	TIM1->ARR = 8000;
+	TIM1->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
+
+}
 
 __attribute__ (( interrupt )) void SysTick_Handler(void)
 {
@@ -91,14 +105,16 @@ __attribute__ (( interrupt )) void EXTI9_5_IRQHandler(void)
 		//	LED3_bb ^= 1;
 		BB(GPIOA->ODR, P6) ^= 1;
 	}
-	else if (EXTI->PR & EXTI_PR_PR9)
-	{
-		EXTI->PR = EXTI_PR_PR9;
+}
 
-		//	LED2_bb ^= 1;
+__attribute__ (( interrupt )) void TIM1_UP_IRQHandler(void)
+{
+	if(TIM1->SR & TIM_SR_UIF)
+	{
+		TIM1->SR &= ~TIM_SR_UIF;
 		BB(GPIOA->ODR, P7) ^= 1;
 	}
 
-
 }
+
 
