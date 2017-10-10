@@ -16,7 +16,7 @@ static void timerInit(void);
 
 int main(void)
 {
-	SysTick_Config(4000000);
+	SysTick_Config(4000000);    // set systick to 500us
 	system_init();
 	sysclk_init();
 	buttonInterruptInit();
@@ -78,15 +78,15 @@ static void buttonInterruptInit(void)
 
 static void timerInit(void)
 {
-//	TIM1->CR1 =TIM_CR1_DIR;    // Counter used as downcounter
-	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
-	NVIC_EnableIRQ(TIM1_UP_IRQn);    // TIM1 Update Interrupt
+	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;    // turn on clock for Timer1
+	NVIC_EnableIRQ(TIM1_UP_IRQn);    // TIM1 Update Interrupt enable in NVIC
 	TIM1->DIER = TIM_DIER_UIE;    // Update interrupt enable
-	TIM1->PSC = 1000;
-	TIM1->ARR = 8000;
+	TIM1->PSC = 1000;    // value of prescaler
+	TIM1->ARR = 8000;    // value of overload
 	TIM1->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
 
 }
+
 
 __attribute__ (( interrupt )) void SysTick_Handler(void)
 {
@@ -105,16 +105,19 @@ __attribute__ (( interrupt )) void EXTI9_5_IRQHandler(void)
 		//	LED3_bb ^= 1;
 		BB(GPIOA->ODR, P6) ^= 1;
 	}
-}
-
-__attribute__ (( interrupt )) void TIM1_UP_IRQHandler(void)
 {
 	if(TIM1->SR & TIM_SR_UIF)
 	{
 		TIM1->SR &= ~TIM_SR_UIF;
-		BB(GPIOA->ODR, P7) ^= 1;
-	}
+}
 
+__attribute__ (( interrupt )) void TIM1_UP_IRQHandler(void)
+{
+	if(TIM1->SR & TIM_SR_UIF)    // check interrupt flag in status register
+	{
+		TIM1->SR &= ~TIM_SR_UIF;    // turn off interrupt flag in status register
+		BB(GPIOA->ODR, P7) ^= 1;    // toggle LED
+	}
 }
 
 
