@@ -105,10 +105,6 @@ __attribute__ (( interrupt )) void EXTI9_5_IRQHandler(void)
 		//	LED3_bb ^= 1;
 		BB(GPIOA->ODR, P6) ^= 1;
 	}
-{
-	if(TIM1->SR & TIM_SR_UIF)
-	{
-		TIM1->SR &= ~TIM_SR_UIF;
 }
 
 __attribute__ (( interrupt )) void TIM1_UP_IRQHandler(void)
