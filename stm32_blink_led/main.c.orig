@@ -7,10 +7,14 @@
 #include "gpio/gpio.h"
 
 
-// Local variables
 volatile uint16_t cnt = 0;
+<<<<<<< HEAD
+=======
+
+>>>>>>> a7c5488387f82712a58f5ed818647bb22d68d4b5
 
 
+// Local functions declarations
 static void sysclk_init(void);
 static void system_init(void);
 static void buttonInterruptInit(void);
