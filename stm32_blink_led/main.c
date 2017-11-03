@@ -7,11 +7,14 @@
 #include "gpio/gpio.h"
 
 
+volatile uint16_t cnt = 0;
+
 
 static void sysclk_init(void);
 static void system_init(void);
 static void buttonInterruptInit(void);
 static void timerInit(void);
+static void externalClockMode1(void);
 
 
 int main(void)
@@ -21,10 +24,11 @@ int main(void)
 	sysclk_init();
 	buttonInterruptInit();
 	timerInit();
-
+	externalClockMode1();
 
 	while (1)
 	{
+
 
 	}
 }
@@ -67,7 +71,7 @@ static void system_init(void)
 
 static void buttonInterruptInit(void)
 {
-	AFIO->EXTICR[3] = AFIO_EXTICR3_EXTI8_PA;    // alternative function on pin PA8 and PA9
+	AFIO->EXTICR[3] = AFIO_EXTICR3_EXTI8_PA;    // alternative function on pin PA8
 	EXTI->IMR =  EXTI_EMR_MR8;    // configure interrupt mask
 	EXTI->FTSR =  EXTI_FTSR_TR8;    // setting trigerring by falling edge
 	NVIC->ISER[0] = NVIC_ISER_SETENA_8;    // Enable interrupt in NVIC
@@ -87,6 +91,21 @@ static void timerInit(void)
 
 }
 
+static void externalClockMode1(void)
+{
+//	gpio_pin_cfg(TI2_GPIO,TI2_pin,GPIO_CRx_CNF_ALT_OD_value);
+
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    // turn on clock for Timer2
+	NVIC_EnableIRQ(TIM2_IRQn);    // TIM2 Update Interrupt enable in NVIC
+	TIM2->DIER = TIM_DIER_UIE;
+	TIM2->ARR = 1;    // value of overload
+	AFIO->EXTICR[0] = AFIO_EXTICR1_EXTI1_PA;    // alternative function on pin PA1
+	TIM2->CCMR1 = TIM_CCMR1_CC2S_1;
+	TIM2->SMCR = TIM_SMCR_SMS_0 | TIM_SMCR_SMS_1 | TIM_SMCR_SMS_2 | TIM_SMCR_TS_2 | TIM_SMCR_TS_1;
+	TIM2->CR1 = TIM_CR1_CEN;
+
+}
+
 
 __attribute__ (( interrupt )) void SysTick_Handler(void)
 {
@@ -103,7 +122,7 @@ __attribute__ (( interrupt )) void EXTI9_5_IRQHandler(void)
 		EXTI->PR = EXTI_PR_PR8;
 
 		//	LED3_bb ^= 1;
-		BB(GPIOA->ODR, P6) ^= 1;
+//		BB(GPIOA->ODR, P6) ^= 1;
 	}
 }
 
@@ -113,7 +132,19 @@ __attribute__ (( interrupt )) void TIM1_UP_IRQHandler(void)
 	{
 		TIM1->SR &= ~TIM_SR_UIF;    // turn off interrupt flag in status register
 		BB(GPIOA->ODR, P7) ^= 1;    // toggle LED
+		cnt++;
 	}
 }
 
 
+__attribute__ (( interrupt )) void TIM2_IRQHandler(void)
+{
+	if(TIM2->SR & TIM_SR_UIF)    // check interrupt flag in status register
+	{
+		TIM2->SR &= ~TIM_SR_UIF;    // turn off interrupt flag in status register
+
+		//	LED3_bb ^= 1;
+		BB(GPIOA->ODR, P6) ^= 1;
+		cnt = 0;
+	}
+}
