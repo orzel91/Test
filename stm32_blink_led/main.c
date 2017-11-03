@@ -11,6 +11,7 @@
 volatile uint16_t cnt = 0;
 
 
+// Local functions declarations
 static void sysclk_init(void);
 static void system_init(void);
 static void buttonInterruptInit(void);
