@@ -95,16 +95,20 @@ static void timerInit(void)
 
 static void externalClockMode1(void)
 {
-//	gpio_pin_cfg(TI2_GPIO,TI2_pin,GPIO_CRx_CNF_ALT_OD_value);
-
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    // turn on clock for Timer2
-	NVIC_EnableIRQ(TIM2_IRQn);    // TIM2 Update Interrupt enable in NVIC
-	TIM2->DIER = TIM_DIER_UIE;
+
+	gpio_pin_cfg(TI2_GPIO,TI2_pin,GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // set PA0 as input, in pull up/down mode
+	GPIOA->BSRR = GPIO_BSRR_BS0;	// pull up PA0
+
+	TIM2->CCER = TIM_CCER_CC2P;    // capture is done on a falling edge
+	TIM2->SMCR = TIM_SMCR_SMS;    // Slave mode selection: External Clock Mode 1
+	TIM2->SMCR |=  TIM_SMCR_TS_2;    // trigger selection: TI1 Edge Detector
+
 	TIM2->ARR = 1;    // value of overload
-	AFIO->EXTICR[0] = AFIO_EXTICR1_EXTI1_PA;    // alternative function on pin PA1
-	TIM2->CCMR1 = TIM_CCMR1_CC2S_1;
-	TIM2->SMCR = TIM_SMCR_SMS_0 | TIM_SMCR_SMS_1 | TIM_SMCR_SMS_2 | TIM_SMCR_TS_2 | TIM_SMCR_TS_1;
-	TIM2->CR1 = TIM_CR1_CEN;
+	TIM2->DIER = TIM_DIER_UIE;    // Update interrupt enable
+	TIM2->CR1 = TIM_CR1_CEN;    // Counter enable
+
+	NVIC_EnableIRQ(TIM2_IRQn);    // TIM2 Update Interrupt enable in NVIC
 
 }
 
