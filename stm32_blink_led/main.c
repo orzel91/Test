@@ -14,8 +14,7 @@ volatile uint16_t cnt = 0;
 // Local functions declarations
 static void sysclk_init(void);
 static void system_init(void);
-static void buttonInterruptInit(void);
-static void timerInit(void);
+static void PWMInit(void);
 static void externalClockMode1(void);
 
 
@@ -24,8 +23,7 @@ int main(void)
 	SysTick_Config(4000000);    // set systick to 500us
 	system_init();
 	sysclk_init();
-	buttonInterruptInit();
-	timerInit();
+	PWMInit();
 	externalClockMode1();
 
 	while (1)
@@ -62,33 +60,35 @@ static void system_init(void)
 	GPIOA->BSRR = GPIO_BSRR_BS7;	// turn off LED3 by 3V3 (which is activated by 0V)
 
 	gpio_pin_cfg(BUTTON1_GPIO, BUTTON1_pin, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
-	gpio_pin_cfg(BUTTON2_GPIO, BUTTON2_pin, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);
 	gpio_pin_cfg(BUTTON3_GPIO, BUTTON3_pin, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);
 
-	GPIOA->BSRR = GPIO_BSRR_BS8;	// pull up Button2
 	GPIOA->BSRR = GPIO_BSRR_BS9;	// pull up Button3
 
 }
 
 
-static void buttonInterruptInit(void)
-{
-	AFIO->EXTICR[3] = AFIO_EXTICR3_EXTI8_PA;    // alternative function on pin PA8
-	EXTI->IMR =  EXTI_EMR_MR8;    // configure interrupt mask
-	EXTI->FTSR =  EXTI_FTSR_TR8;    // setting trigerring by falling edge
-	NVIC->ISER[0] = NVIC_ISER_SETENA_8;    // Enable interrupt in NVIC
-	NVIC_EnableIRQ(EXTI9_5_IRQn);
 
-}
-
-
-static void timerInit(void)
+static void PWMInit(void)
 {
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;    // turn on clock for Timer1
-	NVIC_EnableIRQ(TIM1_UP_IRQn);    // TIM1 Update Interrupt enable in NVIC
-	TIM1->DIER = TIM_DIER_UIE;    // Update interrupt enable
+
+	gpio_pin_cfg(PWM1_GPIO, PWM1_pin, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA8 configured as alternate function
+
+	TIM1->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1;    // set PWM mode 1
+	TIM1->CCMR1 |= TIM_CCMR1_OC1PE;    // Preload register on TIMx_CCR1 enabled
+
+//	TIM1->CR1 |= TIM_CR1_DIR;    //
+//	TIM1->CCER = TIM_CCER_CC1P;    // CC1 channel configured as output: active low
+
+	TIM1->CCER |= TIM_CCER_CC1E;    // CC1 channel configured as output: On
+	TIM1->BDTR = TIM_BDTR_MOE;    // Main output enable
+
 	TIM1->PSC = 1000;    // value of prescaler
 	TIM1->ARR = 8000;    // value of overload
+	TIM1->CCR1 = 4000;    // value to be compared to the counter CNT, and signaled on OC1 output
+
+	TIM1->EGR = TIM_EGR_UG;    // Reinitialize the counter and generates an update of the registers
+	TIM1->CR1 |= TIM_CR1_ARPE;    // Auto-reload preload enable
 	TIM1->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
 
 }
@@ -97,7 +97,7 @@ static void externalClockMode1(void)
 {
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    // turn on clock for Timer2
 
-	gpio_pin_cfg(TI2_GPIO,TI2_pin,GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // set PA0 as input, in pull up/down mode
+	gpio_pin_cfg(TI2_GPIO, TI2_pin, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // set PA0 as input, in pull up/down mode
 	GPIOA->BSRR = GPIO_BSRR_BS0;	// pull up PA0
 
 	TIM2->CCER = TIM_CCER_CC2P;    // capture is done on a falling edge
@@ -117,29 +117,6 @@ __attribute__ (( interrupt )) void SysTick_Handler(void)
 {
 //	LED1_bb ^= 1;
 	BB(GPIOA->ODR, P5) ^= 1;
-}
-
-
-__attribute__ (( interrupt )) void EXTI9_5_IRQHandler(void)
-{
-
-	if (EXTI->PR & EXTI_PR_PR8)
-	{
-		EXTI->PR = EXTI_PR_PR8;
-
-		//	LED3_bb ^= 1;
-//		BB(GPIOA->ODR, P6) ^= 1;
-	}
-}
-
-__attribute__ (( interrupt )) void TIM1_UP_IRQHandler(void)
-{
-	if(TIM1->SR & TIM_SR_UIF)    // check interrupt flag in status register
-	{
-		TIM1->SR &= ~TIM_SR_UIF;    // turn off interrupt flag in status register
-		BB(GPIOA->ODR, P7) ^= 1;    // toggle LED
-		cnt++;
-	}
 }
 
 

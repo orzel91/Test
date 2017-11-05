@@ -49,11 +49,11 @@
 #define BUTTON1_GPIO						GPIOC		///< GPIO port to which the BUTTON is connected
 #define BUTTON1_pin							13			///< pin number of the BUTTON
 
-#define BUTTON2_GPIO						GPIOA		///< GPIO port to which the BUTTON is connected
-#define BUTTON2_pin							8			///< pin number of the BUTTON
-
 #define BUTTON3_GPIO						GPIOA		///< GPIO port to which the BUTTON is connected
 #define BUTTON3_pin							9			///< pin number of the BUTTON
+
+#define PWM1_GPIO							GPIOA		///< GPIO port of PWM1 output
+#define PWM1_pin							8			///< pin number of PWM1 output
 
 #define TI2_GPIO							GPIOA		///< GPIO port to which the external clock TI2 is connected
 #define TI2_pin								0			///< pin number of the external clock TI2
