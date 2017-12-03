@@ -7,8 +7,23 @@
 #include "gpio/gpio.h"
 
 
+#define CPU_FREQ 8000000
+#define PWM1_FREQ 10000
+
 // Local variables
 volatile uint16_t cnt = 0;
+
+// GLobal variables
+volatile uint16_t Duty[]= {1599, 1598, 1597, 1596, 1595, 1594, 1593, 1592, 1591, 1590, 1580,
+						   1570, 1560, 1550, 1540, 1530, 1520, 1510, 1500, 1475, 1450, 1425,
+						   1400, 1350, 1300, 1250, 1200, 1150, 1100, 1050, 1000,  900,  800,
+						    700,  600,  500,  400,  300,  200,  100,    0,  100,  200,  300,
+							400,  500,  600,  700,  800,  900, 1000, 1050, 1100, 1150, 1200,
+						   1250, 1300, 1350, 1400, 1425, 1450, 1475, 1500, 1510, 1520, 1530,
+						   1540, 1550, 1560, 1570, 1580, 1590, 1591, 1592, 1593, 1594, 1595,
+						   1596, 1597, 1598, 1599 };
+
+uint16_t size =  sizeof(Duty) / sizeof(uint16_t);
 
 
 // Local functions declarations
@@ -16,6 +31,7 @@ static void sysclk_init(void);
 static void system_init(void);
 static void PWMInit(void);
 static void externalClockMode1(void);
+static void DMA_init(void);
 
 
 int main(void)
@@ -24,7 +40,8 @@ int main(void)
 	system_init();
 	sysclk_init();
 	PWMInit();
-	externalClockMode1();
+	DMA_init();
+//	externalClockMode1();
 
 	while (1)
 	{
@@ -83,15 +100,38 @@ static void PWMInit(void)
 	TIM1->CCER |= TIM_CCER_CC1E;    // CC1 channel configured as output: On
 	TIM1->BDTR = TIM_BDTR_MOE;    // Main output enable
 
-	TIM1->PSC = 1000;    // value of prescaler
-	TIM1->ARR = 8000;    // value of overload
-	TIM1->CCR1 = 4000;    // value to be compared to the counter CNT, and signaled on OC1 output
+	// PWM freq = (PSC*ARR)/CPU_FREQ
+	TIM1->PSC = 100;    // value of prescaler
+	TIM1->ARR = 1600;    // value of overload
+	TIM1->CCR1 = TIM1->ARR;    // value to be compared to the counter CNT, and signaled on OC1 output
 
 	TIM1->EGR = TIM_EGR_UG;    // Reinitialize the counter and generates an update of the registers
 	TIM1->CR1 |= TIM_CR1_ARPE;    // Auto-reload preload enable
+
+	TIM1->DIER = TIM_DIER_CC1DE;    // Update DMA request enable
 	TIM1->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
 
 }
+
+
+static void DMA_init(void)
+{
+	RCC->AHBENR |= RCC_AHBENR_DMA1EN;    // DMA1 clock enable
+
+	DMA1_Channel2->CPAR = (uint32_t)(&TIM1->CCR1);
+	DMA1_Channel2->CMAR = (uint32_t)(&Duty);
+	DMA1_Channel2->CNDTR = size;
+
+	DMA1_Channel2->CCR = DMA_CCR2_PL_1;    // Channel priority level: High
+	DMA1_Channel2->CCR |= DMA_CCR2_DIR;    // Data transfer direction: Read from memory
+	DMA1_Channel2->CCR |= DMA_CCR2_CIRC;    // Circular mode enabled
+	DMA1_Channel2->CCR |= DMA_CCR2_MINC;    // Memory increment mode enabled
+	DMA1_Channel2->CCR |= DMA_CCR2_PSIZE_0;    // Peripheral size - 16bit
+	DMA1_Channel2->CCR |= DMA_CCR2_MSIZE_0;    // Memory size - 16bit
+	DMA1_Channel2->CCR |= DMA_CCR2_TCIE;    // Transfer complete interrupt enable
+	DMA1_Channel2->CCR |= DMA_CCR2_EN;  // Channel enabled
+}
+
 
 static void externalClockMode1(void)
 {
@@ -109,7 +149,6 @@ static void externalClockMode1(void)
 	TIM2->CR1 = TIM_CR1_CEN;    // Counter enable
 
 	NVIC_EnableIRQ(TIM2_IRQn);    // TIM2 Update Interrupt enable in NVIC
-
 }
 
 
