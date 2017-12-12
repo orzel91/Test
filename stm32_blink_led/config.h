@@ -31,12 +31,12 @@
 #define LED1_ODR							LED1_GPIO->ODR	///< output register for the LED
 #define LED1_bb								bitband_t m_BITBAND_PERIPH(&LED1_ODR, LED1_pin)	///< bit-band "variable" to directly handle the pin
 
-#define LED2_GPIO							GPIOA		///< GPIO port to which the LED is connected
-#define LED2_pin							6			///< pin number of the LED
-
-#define LED2								(1 << LED2_pin)
-#define LED2_ODR							LED2_GPIO->ODR	///< output register for the LED
-#define LED2_bb								bitband_t m_BITBAND_PERIPH(&LED2_ODR, LED2_pin)	///< bit-band "variable" to directly handle the pin
+//#define LED2_GPIO							GPIOA		///< GPIO port to which the LED is connected
+//#define LED2_pin							6			///< pin number of the LED
+//
+//#define LED2								(1 << LED2_pin)
+//#define LED2_ODR							LED2_GPIO->ODR	///< output register for the LED
+//#define LED2_bb								bitband_t m_BITBAND_PERIPH(&LED2_ODR, LED2_pin)	///< bit-band "variable" to directly handle the pin
 
 #define LED3_GPIO							GPIOA		///< GPIO port to which the LED is connected
 #define LED3_pin							7			///< pin number of the LED
@@ -55,8 +55,14 @@
 #define PWM1_GPIO							GPIOA		///< GPIO port of PWM1 output
 #define PWM1_pin							8			///< pin number of PWM1 output
 
+#define PWM2_GPIO							GPIOA		///< GPIO port of PWM1 output
+#define PWM2_pin							6			///< pin number of PWM1 output
+
 #define TI2_GPIO							GPIOA		///< GPIO port to which the external clock TI2 is connected
 #define TI2_pin								0			///< pin number of the external clock TI2
+
+#define ADC15_GPIO							GPIOC		///< GPIO port for ADC input
+#define ADC15_pin							5			///< pin number for ADC input
 
 
 /*
