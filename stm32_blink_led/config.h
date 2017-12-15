@@ -64,6 +64,12 @@
 #define ADC15_GPIO							GPIOC		///< GPIO port for ADC input
 #define ADC15_pin							5			///< pin number for ADC input
 
+#define ADC14_GPIO							GPIOC		///< GPIO port for ADC input
+#define ADC14_pin							4			///< pin number for ADC input
+
+#define ADC10_GPIO							GPIOC		///< GPIO port for ADC input
+#define ADC10_pin							0			///< pin number for ADC input
+
 
 /*
 +=============================================================================+
