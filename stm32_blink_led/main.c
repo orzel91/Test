@@ -15,7 +15,7 @@
 volatile uint16_t cnt = 0;
 uint16_t score = 4000;
 
-uint16_t buffer[] = {0,0, 0};
+uint16_t buffer[4000];
 
 // GLobal variables
 volatile uint16_t Duty[]= {1599, 1598, 1597, 1596, 1595, 1594, 1593, 1592, 1591, 1590, 1580,
@@ -47,21 +47,18 @@ int main(void)
 	SysTick_Config(4000000);    // set systick to 500us
 	system_init();
 	sysclk_init();
-	PWMInit();
 	DMA_init();
-//	externalClockMode1();
 	ADC_init();
-//	ADC_start_conversion();
-//	while(!(ADC1->SR & ADC_SR_EOC));
-//	score = ADC_get_result();
+	PWMInit();
 
 
-	while (1)
+	while ((DMA1->ISR & DMA_ISR_TCIF1) == 0);
+
+	while(1)
 	{
-//		ADC_start_conversion();
-//		while(!(ADC1->SR & ADC_SR_EOC));
-//		score = ADC_get_result();
+
 	}
+
 }
 
 
@@ -106,13 +103,15 @@ static void PWMInit(void)
 	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;    // turn on clock for Timer4
 
 	gpio_pin_cfg(PWM1_GPIO, PWM1_pin, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA8 configured as alternate function
-	gpio_pin_cfg(PWM2_GPIO, PWM2_pin, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA8 configured as alternate function
+	gpio_pin_cfg(PWM2_GPIO, PWM2_pin, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA6 configured as alternate function
+	gpio_pin_cfg(PWM3_GPIO, PWM3_pin, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PB9 configured as alternate function
+
+
+
+	// Timer1
 
 	TIM1->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1;    // set PWM mode 1
 	TIM1->CCMR1 |= TIM_CCMR1_OC1PE;    // Preload register on TIMx_CCR1 enabled
-
-//	TIM1->CR1 |= TIM_CR1_DIR;    //
-//	TIM1->CCER = TIM_CCER_CC1P;    // CC1 channel configured as output: active low
 
 	TIM1->CCER |= TIM_CCER_CC1E;    // CC1 channel configured as output: On
 	TIM1->BDTR = TIM_BDTR_MOE;    // Main output enable
@@ -130,6 +129,8 @@ static void PWMInit(void)
 	TIM1->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
 
 
+
+	// Timer3
 
 	TIM3->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1;    // set PWM mode 1
 	TIM3->CCMR1 |= TIM_CCMR1_OC1PE;    // Preload register on TIMx_CCR1 enabled
@@ -149,11 +150,22 @@ static void PWMInit(void)
 
 	TIM3->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
 
-	// Timer for triggering ADC junction
-	TIM4->PSC = 1000-1;    // value of prescaler
-	TIM4->ARR = 8000-1;    // value of overload
+
+
+	// Timer4
+
+	TIM4->CCMR2 = TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1;    // set PWM mode 1
+	TIM4->CCMR2 |= TIM_CCMR2_OC4PE;    // Output compare 4 preload enable
+
+	TIM4->CCER |= TIM_CCER_CC4E;    // CC4 channel configured as output: On
+
+	// PWM freq = (PSC*ARR)/CPU_FREQ
+	TIM4->PSC = 200-1;    // value of prescaler
+	TIM4->ARR = 40-1;    // value of overload
+	TIM4->CCR4 = (TIM4->ARR / 2);    // value to be compared to the counter CNT, and signaled on OC4 output
+
 	TIM4->EGR = TIM_EGR_UG;    // Reinitialize the counter and generates an update of the registers
-	TIM4->CR2 = TIM_CR2_MMS_1;    // The update event is selected as trigger output (TRGO)
+	TIM4->CR1 |= TIM_CR1_ARPE;    // Auto-reload preload enable
 
 	TIM4->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
 
@@ -194,14 +206,14 @@ static void DMA_init(void)
 
 	DMA1_Channel1->CPAR = (uint32_t)(&ADC1->DR);
 	DMA1_Channel1->CMAR = (uint32_t)(&buffer);
-	DMA1_Channel1->CNDTR = 2;
+	DMA1_Channel1->CNDTR = 2000;
 
 	DMA1_Channel1->CCR = DMA_CCR1_PL_1;    // Channel priority level: High
 //	DMA1_Channel1->CCR |= DMA_CCR6_DIR;    // Data transfer direction: Read from memory
 	DMA1_Channel1->CCR |= DMA_CCR1_CIRC;    // Circular mode enabled
 	DMA1_Channel1->CCR |= DMA_CCR1_MINC;    // Memory increment mode enabled
-	DMA1_Channel1->CCR |= DMA_CCR1_PSIZE_0;    // Peripheral size - 16bit
-	DMA1_Channel1->CCR |= DMA_CCR1_MSIZE_0;    // Memory size - 16bit
+	DMA1_Channel1->CCR |= DMA_CCR1_PSIZE_1;    // Peripheral size - 32bit
+	DMA1_Channel1->CCR |= DMA_CCR1_MSIZE_1;    // Memory size - 32bit
 	DMA1_Channel1->CCR |= DMA_CCR1_TCIE;    // Transfer complete interrupt enable
 	DMA1_Channel1->CCR |= DMA_CCR1_EN;  // Channel enabled
 }
@@ -211,39 +223,34 @@ static void ADC_init(void)
 {
 	uint32_t delay;
 
-	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;    // turn on clock for ADC17
+	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN | RCC_APB2ENR_ADC2EN;    // turn on clock for ADC1 and ADC2
 
 	gpio_pin_cfg(ADC15_GPIO, ADC15_pin, GPIO_CRx_MODE_CNF_IN_ANALOG_value);    // PC5 configured as alternate function
 	gpio_pin_cfg(ADC14_GPIO, ADC14_pin, GPIO_CRx_MODE_CNF_IN_ANALOG_value);    // PC4 configured as alternate function
-	gpio_pin_cfg(ADC10_GPIO, ADC10_pin, GPIO_CRx_MODE_CNF_IN_ANALOG_value);    // PC4 configured as alternate function
+//	gpio_pin_cfg(ADC10_GPIO, ADC10_pin, GPIO_CRx_MODE_CNF_IN_ANALOG_value);    // PC0 configured as alternate function
 
-	ADC1->CR2 = ADC_CR2_ADON;    // wakes up the ADC from Power Down mode
+	ADC1->CR2 = ADC_CR2_ADON;    // wakes up the ADC1 from Power Down mode
+	ADC2->CR2 = ADC_CR2_ADON;    // wakes up the ADC2 from Power Down mode
 	for(delay = 100000; delay; delay--);    // ADC power-up time - tstab
-	ADC1->CR2 |= ADC_CR2_CAL;    // Calibration
-	while(ADC1->CR2 & ADC_CR2_CAL);    // wait to the end of calibration
+	ADC1->CR2 |= ADC_CR2_CAL;    // Calibration ADC1
+	ADC2->CR2 |= ADC_CR2_CAL;    // Calibration ADC2
+	while((ADC1->CR2 & ADC_CR2_CAL) || (ADC2->CR2 & ADC_CR2_CAL));    // wait to the end of calibration
 	ADC1->CR2 |= ADC_CR2_CONT;    // Continuous Conversion
-//	ADC1->CR2 |= ADC_CR2_EXTTRIG;    // Conversion on external event enabled
-//	ADC1->CR2 |= ADC_CR2_EXTSEL_2 | ADC_CR2_EXTSEL_1 | ADC_CR2_EXTSEL_0;    // SWSTART set as trigger for start of conversion
+	ADC1->CR1 |= ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_2;    // Dualmode: Regular simultaneous mode only
+	ADC1->CR2 |= ADC_CR2_EXTTRIG;    // Conversion on external event enabled
+	ADC1->CR2 |= ADC_CR2_EXTSEL_0 | ADC_CR2_EXTSEL_2;    // TIM4_CC4 event set as trigger for start of conversion
 	ADC1->CR2 |= ADC_CR2_DMA;    // Direct Memory access mode
-	ADC1->CR1 |= ADC_CR1_SCAN;    // Scan mode
-	ADC1->CR1 |= ADC_CR1_JEOCIE;    // Interrupt enable for injected channels
-
-	ADC1->CR2 |= ADC_CR2_JEXTTRIG;    // External Trigger Conversion mode for injected channels
-	ADC1->CR2 |= ADC_CR2_JEXTSEL_0 | ADC_CR2_JEXTSEL_2;    // Timer 4 TRGO event
-
-	ADC1->JSQR = ADC_JSQR_JSQ4_1 | ADC_JSQR_JSQ4_3;    // one conversion at chanell 10
-
 
 	ADC1->SQR3 = ADC_SQR3_SQ1_0 | ADC_SQR3_SQ1_1 | ADC_SQR3_SQ1_2 | ADC_SQR3_SQ1_3;    // 1st conversion in regular sequence at 15 chanell
-	ADC1->SQR3 |= ADC_SQR3_SQ2_1 | ADC_SQR3_SQ2_2 | ADC_SQR3_SQ2_3;    // 1st conversion in regular sequence at 14 chanell
-	ADC1->SQR1 = ADC_SQR1_L_0;    // regular chanells 2 conversions
 
-	ADC1->SMPR1 = ADC_SMPR1_SMP15_1 | ADC_SMPR1_SMP15_0;    // Channel15 sample time: 28.5 cycles
-	ADC1->SMPR1 |= ADC_SMPR1_SMP14_1 | ADC_SMPR1_SMP14_0;    // Channel14 sample time: 28.5 cycles
+
+	ADC2->CR2 |= ADC_CR2_EXTTRIG;    // Conversion on external event enabled
+	ADC2->CR2 |= ADC_CR2_EXTSEL_0 | ADC_CR2_EXTSEL_2 | ADC_CR2_EXTSEL_2;    // // SW_START event set as trigger for start of conversion
+
+	ADC2->SQR3 = ADC_SQR3_SQ1_1 | ADC_SQR3_SQ1_2 | ADC_SQR3_SQ1_3;    // 1st conversion in regular sequence at 14 chanell
+
 
 	NVIC_EnableIRQ(ADC1_2_IRQn);    // enable interrupt in NVIC
-
-	ADC1->CR2 |= ADC_CR2_ADON;    // Conversion starts
 
 }
 

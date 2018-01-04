@@ -55,8 +55,11 @@
 #define PWM1_GPIO							GPIOA		///< GPIO port of PWM1 output
 #define PWM1_pin							8			///< pin number of PWM1 output
 
-#define PWM2_GPIO							GPIOA		///< GPIO port of PWM1 output
-#define PWM2_pin							6			///< pin number of PWM1 output
+#define PWM2_GPIO							GPIOA		///< GPIO port of PWM2 output
+#define PWM2_pin							6			///< pin number of PWM2 output
+
+#define PWM3_GPIO							GPIOB		///< GPIO port of PWM3 output
+#define PWM3_pin							9			///< pin number of PWM3 output
 
 #define TI2_GPIO							GPIOA		///< GPIO port to which the external clock TI2 is connected
 #define TI2_pin								0			///< pin number of the external clock TI2
