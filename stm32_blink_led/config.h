@@ -81,6 +81,9 @@
 #define ENC_TI2_GPIO GPIOA
 #define ENC_TI2_PIN 1
 
+#define ENC_SW_GPIO GPIOC
+#define ENC_SW_PIN 12
+
 
 /*
 +=============================================================================+

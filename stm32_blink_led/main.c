@@ -91,12 +91,11 @@ static void system_init(void)
     gpio_pin_cfg(LED1_GPIO, LED1_PIN, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
 	gpio_pin_cfg(LED2_GPIO, LED2_PIN, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
     gpio_pin_cfg(LED3_GPIO, LED3_PIN, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
+    gpio_pin_cfg(BUTTON1_GPIO, BUTTON1_PIN, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
 
     LED1_BB = 0; // turn off LED2 by 0V (which is activated by 3V3)
     LED2_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
     LED3_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
-
-    gpio_pin_cfg(BUTTON1_GPIO, BUTTON1_PIN, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
 }
 
 
@@ -211,6 +210,8 @@ static void Encoder_init(void)
 
     gpio_pin_cfg(ENC_TI1_GPIO, ENC_TI1_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PA0 configured as input floating
 	gpio_pin_cfg(ENC_TI2_GPIO, ENC_TI2_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PA1 configured as input floating
+	gpio_pin_cfg(ENC_SW_GPIO, ENC_SW_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PC12 configures as Pull Up/Down
+	GPIOC->BSRR |= GPIO_BSRR_BS12;    // Pull Up
 
 
     TIM2->SMCR = TIM_SMCR_SMS_1; //
@@ -222,6 +223,12 @@ static void Encoder_init(void)
 
     NVIC_ClearPendingIRQ(TIM2_IRQn);
     NVIC_EnableIRQ(TIM2_IRQn);
+
+    // SW button on encoder
+    AFIO->EXTICR[3] = AFIO_EXTICR4_EXTI12_PC; // source input for EXTIx external interrupt
+    EXTI->IMR = EXTI_IMR_MR12;    // configure interrupt mask
+    EXTI->FTSR =  EXTI_FTSR_TR12;    // setting trigerring by falling edge
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
 
@@ -268,10 +275,19 @@ __attribute__ (( interrupt )) void SysTick_Handler(void)
 
 __attribute__((interrupt)) void TIM2_IRQHandler(void)
 {
-	if (TIM2->SR & TIM_SR_UIF){
+	if (TIM2->SR & TIM_SR_UIF)
+	{
 		TIM2->SR = ~TIM_SR_UIF;
 		LED2_BB ^= 1;
 	}
 }
 
+__attribute__ (( interrupt )) void EXTI15_10_IRQHandler(void)
+{
+	if (EXTI->PR & EXTI_PR_PR12)
+	{
+		EXTI->PR = EXTI_PR_PR12;
+		LED3_BB ^= 1;
+	}
+}
 
