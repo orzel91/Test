@@ -5,9 +5,9 @@
 #include "hdr/hdr_rcc.h"
 #include "hdr/hdr_gpio.h"
 #include "gpio/gpio.h"
+#include "uart/uart.h"
 
 
-#define CPU_FREQ 8000000
 #define PWM1_FREQ 10000
 #define ADC_BUFFER_SIZE 10
 #define ENC_TICKS 0x27
@@ -17,6 +17,7 @@
 
 // Local variables
 volatile uint16_t cnt = 0;
+volatile uint16_t uartFlag = 0;
 volatile uint16_t adcFlag = 0;
 
 uint16_t buffer[ADC_BUFFER_SIZE];
@@ -53,20 +54,19 @@ static void Encoder_init(void);
 
 int main(void)
 {
-    sysclk_init();
-    SysTick_Config(4000000);    // set systick to 500us
-    system_init();
-    DMA_init();
-    ADC_init();
-    PWMInit();
-    Encoder_init();
+	sysclk_init();
+	SysTick_Config(9000000);    // set systick to 250ms
+	system_init();
+	DMA_init();
+	ADC_init();
+	PWMInit();
+	Encoder_init();
+	UART_init(BAUD_RATE);
 
-    while ((DMA1->ISR & DMA_ISR_TCIF1) == 0);
+	while(1)
+	{
 
-    while(1)
-    {
-
-    }
+	}
 }
 
 
@@ -76,10 +76,11 @@ static void sysclk_init(void)
     RCC_CR_HSION_bb = 1;    // enable HSI clock
     while(!RCC_CR_HSIRDY_bb);    // wait until HIS clock will be ready
     RCC_CFGR_PLLSRC_bb = 0;    // HSI oscillator clock / 2 selected as PLL input clock
-    RCC->CFGR = RCC_CFGR_PLLMUL16_value;    // set PLL to multiplay x16
+    RCC->CFGR |= RCC_CFGR_PLLMULL9;    // set PLL to multiplay x9
     RCC_CR_PLLON_bb = 1;    // enable PLL
     while (!RCC_CR_PLLRDY_bb);   // wait until PLL will be ready
     RCC->CFGR |= RCC_CFGR_SW_PLL;   // change SYSCLK to PLL
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV1; // HCLK not divided
 }
 
 
@@ -88,14 +89,21 @@ static void system_init(void)
 {
     gpio_init();
 
-    gpio_pin_cfg(LED1_GPIO, LED1_PIN, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
-	gpio_pin_cfg(LED2_GPIO, LED2_PIN, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
-    gpio_pin_cfg(LED3_GPIO, LED3_PIN, GPIO_CRx_MODE_CNF_OUT_PP_10M_value);
+    gpio_pin_cfg(LED1_GPIO, LED1_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
+	gpio_pin_cfg(LED2_GPIO, LED2_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
+    gpio_pin_cfg(LED3_GPIO, LED3_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
+
+    gpio_pin_cfg(TEST1_GPIO, TEST1_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
+    gpio_pin_cfg(TEST2_GPIO, TEST2_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
+
     gpio_pin_cfg(BUTTON1_GPIO, BUTTON1_PIN, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
 
     LED1_BB = 0; // turn off LED2 by 0V (which is activated by 3V3)
     LED2_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
     LED3_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
+
+    TEST1_BB = 0; // Set GPIO to Low
+    TEST2_BB = 0; // Set GPIO to Low
 }
 
 
@@ -214,7 +222,7 @@ static void Encoder_init(void)
 	GPIOC->BSRR |= GPIO_BSRR_BS12;    // Pull Up
 
 
-    TIM2->SMCR = TIM_SMCR_SMS_1; //
+    TIM2->SMCR = TIM_SMCR_SMS_1; // counter is counting on TI1 edges only
     TIM2->CCMR1 = TIM_CCMR1_IC1F | TIM_CCMR1_IC2F; // Input capture filters
     TIM2->CCER = TIM_CCER_CC1P; // inverted: capture is done on a falling edge of IC1
     TIM2->ARR = ENC_TICKS; // quadrature encoder
@@ -230,6 +238,7 @@ static void Encoder_init(void)
     EXTI->FTSR =  EXTI_FTSR_TR12;    // setting trigerring by falling edge
     NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
+
 
 
 #ifdef EXTERNAL_CLOCK
@@ -284,6 +293,7 @@ __attribute__((interrupt)) void TIM2_IRQHandler(void)
 
 __attribute__ (( interrupt )) void EXTI15_10_IRQHandler(void)
 {
+
 	if (EXTI->PR & EXTI_PR_PR12)
 	{
 		EXTI->PR = EXTI_PR_PR12;
