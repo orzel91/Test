@@ -6,6 +6,7 @@
 #include "hdr/hdr_gpio.h"
 #include "gpio/gpio.h"
 #include "uart/uart.h"
+#include "uart/AT_commands.h"
 
 
 #define PWM1_FREQ 10000
@@ -35,6 +36,7 @@ volatile uint16_t Duty[]= {1599, 1598, 1597, 1596, 1595, 1594, 1593, 1592, 1591,
 
 uint16_t size =  sizeof(Duty) / sizeof(uint16_t);
 
+volatile uint16_t enc_cnt = 0;
 
 // Local functions declarations
 #ifdef EXTERNAL_CLOCK
@@ -62,10 +64,13 @@ int main(void)
 	PWMInit();
 	Encoder_init();
 	UART_init(BAUD_RATE);
+	AT_commandInit();
+
+	UART_putStr("System init...");
 
 	while(1)
 	{
-
+		UART_RX_STR_EVENT();
 	}
 }
 
@@ -287,6 +292,7 @@ __attribute__((interrupt)) void TIM2_IRQHandler(void)
 	if (TIM2->SR & TIM_SR_UIF)
 	{
 		TIM2->SR = ~TIM_SR_UIF;
+		enc_cnt++;
 		LED2_BB ^= 1;
 	}
 }
@@ -297,7 +303,6 @@ __attribute__ (( interrupt )) void EXTI15_10_IRQHandler(void)
 	if (EXTI->PR & EXTI_PR_PR12)
 	{
 		EXTI->PR = EXTI_PR_PR12;
-		LED3_BB ^= 1;
 	}
 }
 

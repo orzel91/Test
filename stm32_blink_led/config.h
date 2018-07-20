@@ -14,6 +14,7 @@
 #define CONFIG_H_
 
 #include "hdr/hdr_bitband.h"
+#include "gpio/gpio.h"
 
 /*
 +=============================================================================+
