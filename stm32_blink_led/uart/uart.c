@@ -95,10 +95,6 @@ void UART_init(uint32_t baudrate)
 	NVIC_EnableIRQ(USART2_IRQn);
 	NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 	NVIC_EnableIRQ(DMA1_Channel7_IRQn);
-
-
-	Rx.head = UART_TX_BUF_SIZE - 1;
-	Rx.tail = UART_TX_BUF_SIZE - 1;
 }
 
 // function to get string from circle buffer to new buffer
@@ -111,6 +107,7 @@ char* UART_getStr(char* buf)
 		// take signs until CR occurance or empty circle buffer
 		while( (c = UART_getChr()) )
 		{
+			// CR = 13, LF = 10
 			if( 13 == c || c < 0 ) {
 				break;
 			}
@@ -122,6 +119,16 @@ char* UART_getStr(char* buf)
 	return wsk;
 }
 
+// function to collect one sign from circle buffer
+int UART_getChr(void)
+{
+    // check if index are equal
+    if ( Rx.head == Rx.tail ) return -1;
+    Rx.tail = (Rx.tail + 1) & UART_RX_BUF_MASK;
+    return Rx.buffer[Rx.tail];
+}
+
+
 // register function of callback function for event UART_RX_STR_EVENT()
 void register_uart_str_rx_event_callback(void (*callback)(char * pBuf))
 {
@@ -131,22 +138,16 @@ void register_uart_str_rx_event_callback(void (*callback)(char * pBuf))
 // Event for receive string from circle buffer
 void UART_RX_STR_EVENT(void)
 {
-	char tempBuff[100];
+	char tempBuff[32];
 
 	if( Rx.ascii_line ) {
-
-		memset(tempBuff, 0 ,sizeof(tempBuff));
-		UART_getStr(tempBuff);
-		UART_putStr(tempBuff);
-
-		memset(tempBuff, 0 ,sizeof(tempBuff));
-
-/*		if( uart_rx_str_event_callback ) {
-			UART_getStr( tBuffer );
-			(*uart_rx_str_event_callback)( tBuffer );
+		if( uart_rx_str_event_callback ) {
+			memset(tempBuff, 0 ,sizeof(tempBuff));
+			UART_getStr(tempBuff);
+			(*uart_rx_str_event_callback)(tempBuff);
 		} else {
 			Rx.head = Rx.tail;
-		}*/
+		}
 	}
 }
 
@@ -210,24 +211,15 @@ void UART_putInt(int value, int radix)
 	UART_putStr(string);
 }
 
-// function to collect one sign from circle buffer
-int UART_getChr(void)
-{
-    // check if index are equal
-    if ( Rx.head == Rx.tail ) return -1;
-    Rx.tail = (Rx.tail + 1) & UART_RX_BUF_MASK;
-    return Rx.buffer[Rx.tail];
-}
-
 // function to get data from Rx
 static void UART_rxMemCpy(uint16_t cnt, uint16_t circIndex)
 {
     register uint16_t tmp_head = 0;
-    register uint16_t i = circIndex = 0;
+    register uint16_t i = circIndex;
 
 	while (cnt)
 	{
-	    tmp_head = ( Rx.head + 1) & UART_RX_BUF_MASK;
+	    tmp_head = (Rx.head + 1) & UART_RX_BUF_MASK;
 
 	    if ( tmp_head == Rx.tail ) {
 	    	Rx.head = Rx.tail; // waste whole buffer of data, too many data
@@ -236,16 +228,28 @@ static void UART_rxMemCpy(uint16_t cnt, uint16_t circIndex)
 
 	    	switch (Rx.bufferCircular[i])
 	    	{
-				case 0: /* no break */
-				case 10: break;
-				case 13: Rx.ascii_line++;
-				/* no break */
+				case 0:
+					/* no break */
+
+				case 10: // LF
+					Rx.head--;
+					break;
+
+				case 13: // CR
+					Rx.ascii_line++;
+					Rx.buffer[tmp_head] = Rx.bufferCircular[i++];
+					break;
+
 				default:
 					Rx.buffer[tmp_head] = Rx.bufferCircular[i++];
 					break;
 			}
 		}
 	    cnt--;
+	}
+
+	if ( !Rx.ascii_line ) {
+		Rx.head = Rx.tail; // waste data, bad data or not complete (without CR)
 	}
 }
 
@@ -256,8 +260,16 @@ __attribute__ ((interrupt)) void USART2_IRQHandler(void)
         volatile uint16_t tmp;
         tmp = USART2->SR; // Clear IDLE flag by reading SR and DR
         tmp = USART2->DR;
-        (void)tmp;
-		UART_rxMemCpy( (UART_RX_CIRC_BUF_SIZE - DMA1_Channel6->CNDTR), 0 ); // copy packets from RxCircBuf to RxBuf
+        tmp = UART_RX_CIRC_BUF_SIZE - DMA1_Channel6->CNDTR;
+		UART_rxMemCpy( tmp, 0 ); // copy packets from RxCircBuf to RxBuf
+		memset((void*)Rx.bufferCircular, 0 ,sizeof(Rx.bufferCircular)); // needed to add explicit casting
+
+	    DMA1_Channel6->CCR &= ~DMA_CCR6_EN; // Channel disabled
+		DMA1->IFCR |= DMA_IFCR_CGIF6; // Clears the GIF, TEIF, HTIF and TCIF flags in the DMA_ISR register
+	    DMA1_Channel6->CPAR = (uint32_t)(&USART2->DR);
+	    DMA1_Channel6->CMAR = (uint32_t)(&Rx.bufferCircular);
+	    DMA1_Channel6->CNDTR = UART_RX_CIRC_BUF_SIZE;
+	    DMA1_Channel6->CCR |= DMA_CCR6_EN; // Channel enabled
 	}
 }
 
@@ -266,6 +278,7 @@ __attribute__((interrupt)) void DMA1_Channel6_IRQHandler(void)
 	if ( DMA1->ISR & DMA_ISR_TCIF6 ) {
 		DMA1->IFCR |= DMA_IFCR_CTCIF6; // clear transfer complete flag
 		UART_rxMemCpy( (UART_RX_CIRC_BUF_SIZE - DMA1_Channel6->CNDTR), 0 ); // copy packets from RxCircBuf to RxBuf
+		memset((void*)Rx.bufferCircular, 0 ,sizeof(Rx.bufferCircular)); // needed to add explicit casting
 
 		DMA1->IFCR |= DMA_IFCR_CGIF6; // Clears the GIF, TEIF, HTIF and TCIF flags in the DMA_ISR register
 	    DMA1_Channel6->CPAR = (uint32_t)(&USART2->DR);

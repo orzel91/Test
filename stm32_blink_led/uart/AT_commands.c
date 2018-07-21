@@ -41,12 +41,16 @@ static void parse_uart_data( char * pBuf )
 	char * rest;
 	uint8_t i=0, len;
 
+	// check if in string there is "=" or "?"
 	if ( strpbrk(pBuf, "=?"))	{
-		if ( strpbrk(pBuf, "?"))	{
+		// check if in string there is "?"
+		if ( strpbrk(pBuf, "?") ) {
+			// divide string on tokens, "?" is a separator of token
 			cmd_wsk = strtok_r(pBuf, "?", &rest);
 			len = strlen(cmd_wsk);
 			for(i=0;i<AT_CNT;i++) {
-				if ( len && 0 == strncasecmp(cmd_wsk, commands[i].name, len) ) {
+				// check string if it is the same as in AT command table - if yes, it will return zero
+				if ( len && ( 0 == strncasecmp(cmd_wsk, commands[i].name, len) ) ) {
 					if (commands[i].name) {
 						_at_srv = (void *)( commands[i].at_service );
 						if( _at_srv) {
@@ -59,15 +63,24 @@ static void parse_uart_data( char * pBuf )
 			}
 
 		} else {
-
+			// divide string on tokens, "=" is a separator of token
 			cmd_wsk = strtok_r(pBuf, "=", &rest);
 			len = strlen(cmd_wsk);
-			for(i=0;i<AT_CNT;i++) {
-				if ( len && 0 == strncasecmp(cmd_wsk, commands[i].name, len) ) {
-					if (commands[i].name) {
-						_at_srv = (void *)( &commands[i].at_service );
-						if( _at_srv && ! _at_srv( 1, rest ) ) UART_putStr("OK\r\n");
-						else UART_putStr("ERROR\r\n");
+
+			for(i=0;i<AT_CNT;i++)
+			{
+				// check string if it is the same as in AT command table - if yes, it will return zero
+				if ( len && 0 == strncasecmp(cmd_wsk, commands[i].name, len) )
+				{
+					if (commands[i].name)
+					{
+						_at_srv = (void *)( commands[i].at_service );
+
+						if( _at_srv && ! _at_srv( 1, rest ) ) {
+							UART_putStr("OK\r\n");
+						} else {
+							UART_putStr("ERROR\r\n");
+						}
 					}
 					break;
 				}
@@ -79,10 +92,13 @@ static void parse_uart_data( char * pBuf )
 		if( 0 == pBuf[0] ) UART_putStr("\r\n");
 		else {
 			for(i=0;i<AT_CNT;i++) {
+				// check string if it is the same as in AT command table - if yes, it will return zero
 				if ( 0 == strncasecmp(pBuf, commands[i].name, strlen(pBuf)) ) {
 					if( commands[i].name ) {
-						_at_srv = (void *)(&commands[i].name);
-						if( _at_srv) _at_srv(2,0);
+						_at_srv = (void *)( commands[i].at_service );
+						if( _at_srv) {
+							_at_srv(2,0);
+						}
 					}
 					break;
 				}
@@ -109,7 +125,7 @@ static int16_t at_ledService(uint16_t inout, char* params)
 			}
 		}
 
-		UART_putStr("+LED: ");
+		UART_putStr("LED: ");
 
 		if( LED3_ODR & LED3 ) {
 			UART_putInt(1,10);
