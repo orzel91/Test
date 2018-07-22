@@ -70,6 +70,8 @@ void UART_init(uint32_t baudrate)
     DMA1_Channel6->CCR = DMA_CCR6_PL_1;    // Channel priority level: High
     DMA1_Channel6->CCR |= DMA_CCR6_MINC;    // Memory increment mode enabled
     DMA1_Channel6->CCR |= DMA_CCR6_TCIE;    // Transfer complete interrupt enable
+    DMA1_Channel6->CCR |= DMA_CCR6_HTIE;    // Half Transfer interrupt enable
+    DMA1_Channel6->CCR |= DMA_CCR6_CIRC;    // Turn on Circular mode
     DMA1_Channel6->CCR |= DMA_CCR6_EN;    // Channel enabled
 
 	// Configure DMA chanell_7 - Tx
@@ -138,7 +140,7 @@ void register_uart_str_rx_event_callback(void (*callback)(char * pBuf))
 // Event for receive string from circle buffer
 void UART_RX_STR_EVENT(void)
 {
-	char tempBuff[32];
+	char tempBuff[64];
 
 	if( Rx.ascii_line ) {
 		if( uart_rx_str_event_callback ) {
@@ -247,22 +249,27 @@ static void UART_rxMemCpy(uint16_t cnt, uint16_t circIndex)
 		}
 	    cnt--;
 	}
-
-	if ( !Rx.ascii_line ) {
-		Rx.head = Rx.tail; // waste data, bad data or not complete (without CR)
-	}
 }
 
 __attribute__ ((interrupt)) void USART2_IRQHandler(void)
 {
+	// IDLE line ISR
 	if (USART2->SR & USART_SR_IDLE)
 	{
         volatile uint16_t tmp;
-        tmp = USART2->SR; // Clear IDLE flag by reading SR and DR
+
+        // Clear IDLE flag by reading SR and DR
+        tmp = USART2->SR;
         tmp = USART2->DR;
-        tmp = UART_RX_CIRC_BUF_SIZE - DMA1_Channel6->CNDTR;
-		UART_rxMemCpy( tmp, 0 ); // copy packets from RxCircBuf to RxBuf
-		memset((void*)Rx.bufferCircular, 0 ,sizeof(Rx.bufferCircular)); // needed to add explicit casting
+
+        // check if IDLE was detected after Half Transfer Complete
+        if (DMA1_Channel6->CNDTR < ((UART_RX_CIRC_BUF_SIZE/2)+1)) {
+            tmp = (UART_RX_CIRC_BUF_SIZE/2) - DMA1_Channel6->CNDTR;
+    		UART_rxMemCpy(tmp, (UART_RX_CIRC_BUF_SIZE/2)); // copy packets from RxCircBuf to RxBuf
+        } else {
+            tmp = UART_RX_CIRC_BUF_SIZE - DMA1_Channel6->CNDTR;
+    		UART_rxMemCpy(tmp, 0); // copy packets from RxCircBuf to RxBuf
+		}
 
 	    DMA1_Channel6->CCR &= ~DMA_CCR6_EN; // Channel disabled
 		DMA1->IFCR |= DMA_IFCR_CGIF6; // Clears the GIF, TEIF, HTIF and TCIF flags in the DMA_ISR register
@@ -275,21 +282,22 @@ __attribute__ ((interrupt)) void USART2_IRQHandler(void)
 
 __attribute__((interrupt)) void DMA1_Channel6_IRQHandler(void)
 {
-	if ( DMA1->ISR & DMA_ISR_TCIF6 ) {
-		DMA1->IFCR |= DMA_IFCR_CTCIF6; // clear transfer complete flag
-		UART_rxMemCpy( (UART_RX_CIRC_BUF_SIZE - DMA1_Channel6->CNDTR), 0 ); // copy packets from RxCircBuf to RxBuf
-		memset((void*)Rx.bufferCircular, 0 ,sizeof(Rx.bufferCircular)); // needed to add explicit casting
+	// Half Transfer ISR
+	if (DMA1->ISR & DMA_ISR_HTIF6) {
+		DMA1->IFCR |= DMA_ISR_HTIF6; // clear half transfer flag
+		UART_rxMemCpy((UART_RX_CIRC_BUF_SIZE/2), 0); // copy packets from RxCircBuf to RxBuf
+	}
 
-		DMA1->IFCR |= DMA_IFCR_CGIF6; // Clears the GIF, TEIF, HTIF and TCIF flags in the DMA_ISR register
-	    DMA1_Channel6->CPAR = (uint32_t)(&USART2->DR);
-	    DMA1_Channel6->CMAR = (uint32_t)(&Rx.bufferCircular);
-	    DMA1_Channel6->CNDTR = UART_RX_CIRC_BUF_SIZE;
-	    DMA1_Channel6->CCR |= DMA_CCR6_EN; // Channel enabled
+	// Transfer Complete ISR
+	if (DMA1->ISR & DMA_ISR_TCIF6) {
+		DMA1->IFCR |= DMA_IFCR_CTCIF6; // clear transfer complete flag
+		UART_rxMemCpy((UART_RX_CIRC_BUF_SIZE/2), (UART_RX_CIRC_BUF_SIZE/2)); // copy packets from RxCircBuf to RxBuf
 	}
 }
 
 __attribute__((interrupt)) void DMA1_Channel7_IRQHandler(void)
 {
+	// Transfer Complete ISR
 	if (DMA1->ISR & DMA_ISR_TCIF7)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF7; // clear transfer complete flag
@@ -302,7 +310,7 @@ __attribute__((interrupt)) void DMA1_Channel7_IRQHandler(void)
 		} else {
 			uint16_t tempTail = 0;
 			DMA1_Channel7->CCR &= ~DMA_CCR7_EN; // Channel disabled
-			DMA1->IFCR |= DMA_IFCR_CGIF7; // Clears the GIF, TEIF, HTIF and TCIF flags in the DMA_ISR register
+			DMA1->IFCR |= DMA_IFCR_CTCIF7; // Channel 7 Transfer Complete clear
 			DMA1_Channel7->CPAR = (uint32_t)(&USART2->DR);
 			tempTail = (Tx.tail + 1) & UART_TX_BUF_MASK;
 
