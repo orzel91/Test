@@ -83,6 +83,7 @@ static void sysclk_init(void)
     RCC_CFGR_PLLSRC_bb = 0;    // HSI oscillator clock / 2 selected as PLL input clock
     RCC->CFGR |= RCC_CFGR_PLLMULL9;    // set PLL to multiplay x9
     RCC_CR_PLLON_bb = 1;    // enable PLL
+    FLASH->ACR |= FLASH_ACR_LATENCY_1; //  One wait state, if 24 MHz < SYSCLK ≤ 48 MHz
     while (!RCC_CR_PLLRDY_bb);   // wait until PLL will be ready
     RCC->CFGR |= RCC_CFGR_SW_PLL;   // change SYSCLK to PLL
     RCC->CFGR |= RCC_CFGR_PPRE1_DIV1; // HCLK not divided
