@@ -1,17 +1,23 @@
+#include <oled1306.h>
 #include <stdint.h>
-#include "inc/stm32f10x.h"
+#include <stdbool.h>
+#include <string.h>
 #include <time.h>
+#include "inc/stm32f10x.h"
 #include "config.h"
 #include "hdr/hdr_rcc.h"
 #include "hdr/hdr_gpio.h"
 #include "gpio/gpio.h"
 #include "uart/uart.h"
 #include "uart/AT_commands.h"
+#include "spi.h"
+#include "ssd1306/oled1306.h"
+#include "ssd1306/fonts.h"
 
 
 #define PWM1_FREQ 10000
 #define ADC_BUFFER_SIZE 10
-#define ENC_TICKS 0x27
+#define ENC_TICKS 0x100
 
 //#define EXTERNAL_CLOCK
 //#define ADC_AVARAGE
@@ -36,6 +42,17 @@ volatile uint16_t Duty[]= {1599, 1598, 1597, 1596, 1595, 1594, 1593, 1592, 1591,
 
 uint16_t size =  sizeof(Duty) / sizeof(uint16_t);
 
+uint8_t buf1[] = {
+		0x13,
+		0xaf,
+		0x4c,
+		0x28,
+		0xba,
+		0xac
+};
+
+BasicTimer mainTimer;
+
 volatile uint16_t enc_cnt = 0;
 
 // Local functions declarations
@@ -57,7 +74,7 @@ static void Encoder_init(void);
 int main(void)
 {
 	sysclk_init();
-	SysTick_Config(9000000);    // set systick to 250ms
+	SysTick_Config(FREQUENCY/SYSTICK_FREQ);    // set systick
 	system_init();
 	DMA_init();
 	ADC_init();
@@ -65,12 +82,36 @@ int main(void)
 	Encoder_init();
 	UART_init(BAUD_RATE);
 	AT_commandInit();
+	OLED_init();
 
-	UART_putStr("System init...");
+	memset(&mainTimer, 0, sizeof(mainTimer));
+	UART_putStr("System init...\n");
+
+
+	TIMER_START(mainTimer, 10);
+
+
+	while (!mainTimer.flag) {}
+
+	OLED_fill(BLACK);
+
+	OLED_refresh();
+
+	TIMER_START(mainTimer, 1000);
+	bool check = true;
 
 	while(1)
 	{
+		if(mainTimer.flag) {
+			OLED_SetCursor(10, 30);
+			OLED_writeString("Cnt:", Font_11x18, WHITE);
+			OLED_writeInt(TIM2->CNT, 10, Font_11x18, WHITE);
+			OLED_refresh();
+
+			TIMER_START(mainTimer, 10);
+		}
 		UART_RX_STR_EVENT();
+		SPI_checkDmaStatus();
 	}
 }
 
@@ -100,7 +141,6 @@ static void system_init(void)
     gpio_pin_cfg(LED3_GPIO, LED3_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
 
     gpio_pin_cfg(TEST1_GPIO, TEST1_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
-    gpio_pin_cfg(TEST2_GPIO, TEST2_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
 
     gpio_pin_cfg(BUTTON1_GPIO, BUTTON1_PIN, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
 
@@ -109,7 +149,6 @@ static void system_init(void)
     LED3_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
 
     TEST1_BB = 0; // Set GPIO to Low
-    TEST2_BB = 0; // Set GPIO to Low
 }
 
 
@@ -121,7 +160,6 @@ static void PWMInit(void)
     RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;    // turn on clock for Timer4
 
     gpio_pin_cfg(PWM1_GPIO, PWM1_PIN, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA8 configured as alternate function
-    gpio_pin_cfg(PWM2_GPIO, PWM2_PIN, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA6 configured as alternate function
 
 
     // Timer1
@@ -222,10 +260,11 @@ static void Encoder_init(void)
 
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    // turn on clock for Timer2
 
+    gpio_pin_cfg(PWM2_GPIO, PWM2_PIN, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA6 configured as alternate function
+
     gpio_pin_cfg(ENC_TI1_GPIO, ENC_TI1_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PA0 configured as input floating
 	gpio_pin_cfg(ENC_TI2_GPIO, ENC_TI2_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PA1 configured as input floating
-	gpio_pin_cfg(ENC_SW_GPIO, ENC_SW_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PC12 configures as Pull Up/Down
-	GPIOC->BSRR |= GPIO_BSRR_BS12;    // Pull Up
+	gpio_pin_cfg(ENC_SW_GPIO, ENC_SW_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PC12 configured as input floating
 
 
     TIM2->SMCR = TIM_SMCR_SMS_1; // counter is counting on TI1 edges only
@@ -286,6 +325,13 @@ static uint16_t ADC_filter(uint16_t *array, uint16_t size)
 __attribute__ (( interrupt )) void SysTick_Handler(void)
 {
 	LED1_BB ^= 1;
+
+	if (mainTimer.cnt) {
+		if (--mainTimer.cnt == 0) {
+			mainTimer.flag = true;
+		}
+	}
+
 }
 
 __attribute__((interrupt)) void TIM2_IRQHandler(void)
@@ -294,7 +340,6 @@ __attribute__((interrupt)) void TIM2_IRQHandler(void)
 	{
 		TIM2->SR = ~TIM_SR_UIF;
 		enc_cnt++;
-		LED2_BB ^= 1;
 	}
 }
 
@@ -304,6 +349,8 @@ __attribute__ (( interrupt )) void EXTI15_10_IRQHandler(void)
 	if (EXTI->PR & EXTI_PR_PR12)
 	{
 		EXTI->PR = EXTI_PR_PR12;
+
+
 	}
 }
 

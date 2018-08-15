@@ -15,6 +15,10 @@
 
 #include "hdr/hdr_bitband.h"
 #include "gpio/gpio.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include "hdr/hdr_bitband.h"
+#include "gpio/gpio.h"
 
 /*
 +=============================================================================+
@@ -24,8 +28,9 @@
 
 #define CRYSTAL 8000000ul    // quartz crystal resonator which is connected to the chip
 #define FREQUENCY 36000000ul    // desired target frequency of the core
+#define SYSTICK_FREQ 1000
 
-// Leds
+// LEDs
 #define LED1_GPIO GPIOA    // GPIO port to which the LED is connected
 #define LED1_PIN 5    // pin number of the LED
 
@@ -51,23 +56,16 @@
 #define TEST1_GPIO GPIOC    // GPIO port to which the test gpio is connected
 #define TEST1_PIN 6    // pin number of the test gpio
 
-#define TEST2_GPIO GPIOC    // GPIO port to which the test gpio is connected
-#define TEST2_PIN 7    // pin number of the test gpio
-
 #define TEST1 (1 << TEST1_PIN)
 #define TEST1_ODR TEST1_GPIO->ODR    // output register for the GPIO
 #define TEST1_BB bitband_t m_BITBAND_PERIPH(&TEST1_ODR, TEST1_PIN)    // bit-band "variable" to directly handle the pin
 
-#define TEST2 (1 << TEST2_PIN)
-#define TEST2_ODR TEST2_GPIO->ODR    // output register for the GPIO
-#define TEST2_BB bitband_t m_BITBAND_PERIPH(&TEST2_ODR, TEST2_PIN)    // bit-band "variable" to directly handle the pin
-
-//Buttons
+// BUTTONs
 #define BUTTON1_GPIO GPIOC    // GPIO port to which the BUTTON is connected
 #define BUTTON1_PIN 13    // pin number of the BUTTON
 
 
-//PWM outputs
+// PWM outputs
 #define PWM1_GPIO GPIOA    // GPIO port of PWM1 output
 #define PWM1_PIN 8    // pin number of PWM1 output
 
@@ -80,7 +78,7 @@
 #define TI2_GPIO GPIOA    // GPIO port to which the external clock TI2 is connected
 #define TI2_PIN 0    // pin number of the external clock TI2
 
-//Adc
+// ADC
 #define ADC15_GPIO GPIOC    // GPIO port for ADC input
 #define ADC15_PIN 5    // pin number for ADC input
 
@@ -90,7 +88,7 @@
 #define ADC10_GPIO GPIOC    // GPIO port for ADC input
 #define ADC10_PIN 0    // pin number for ADC input
 
-//Encoder
+// ENCODER
 #define ENC_TI1_GPIO GPIOA    // GPIO port for ENC_CLK
 #define ENC_TI1_PIN 0    // pin number for ENC_CLK
 
@@ -100,16 +98,59 @@
 #define ENC_SW_GPIO GPIOC    // GPIO port for ENC_SW
 #define ENC_SW_PIN 12    // pin number for ENC_SW
 
-//UART
+// UART2
 #define UART2_TX_GPIO GPIOA
 #define UART2_TX_PIN 2
 
 #define UART2_RX_GPIO GPIOA
 #define UART2_RX_PIN 3
 
+// SPI1
+#define SPI1_SCK_GPIO GPIOA
+#define SPI1_SCK_PIN 5
+
+#define SPI1_MOSI_GPIO GPIOA
+#define SPI1_MOSI_PIN 7
+
+//#define SPI1_MISO_GPIO GPIOA
+//#define SPI1_MISO_PIN 6
+
+#define SPI1_NSS_GPIO GPIOA
+#define SPI1_NSS_PIN 4
+
+#define SPI1_NSS (1 << SPI1_NSS_PIN)
+#define SPI1_NSS_ODR  SPI1_NSS_GPIO->ODR
+#define SPI1_NSS_BB bitband_t m_BITBAND_PERIPH(&SPI1_NSS_ODR, SPI1_NSS_PIN)
+
+// OLED1306
+#define OLED_DC_GPIO GPIOA
+#define OLED_DC_PIN 9
+
+#define OLED_RES_GPIO GPIOC
+#define OLED_RES_PIN 7
+
+#define OLED_DC (1 << OLED_DC_PIN)
+#define OLED_DC_ODR  OLED_DC_GPIO->ODR
+#define OLED_DC_BB bitband_t m_BITBAND_PERIPH(&OLED_DC_ODR, OLED_DC_PIN)
+
+#define OLED_RES (1 << OLED_RES_PIN)
+#define OLED_RES_ODR  OLED_RES_GPIO->ODR
+#define OLED_RES_BB bitband_t m_BITBAND_PERIPH(&OLED_RES_ODR, OLED_RES_PIN)
+
+
 //MCO - The microcontroller clock output
 //#define MCO_GPIO GPIOA
 //#define MCO_PIN 8
+
+#define TIMER_START(timer, value) 	{timer.cnt = value; timer.flag = false;}
+#define TIMER_STOP(timer)			{timer.cnt = 0; timer.flag = false;}
+
+
+typedef struct {
+	uint16_t cnt;
+	bool flag;
+} BasicTimer;
+
 
 /*
 +=============================================================================+
