@@ -75,7 +75,7 @@ void OLED_init(void)
 
 	//  7. Set Contrast Control 81h, 7Fh
 	SPI_sendCmd(OLED1306_SETCONTRAST );
-	SPI_sendCmd(0xCf);
+	SPI_sendCmd(0x10);
 
 	//  8. Disable Entire Display On A4h
 	SPI_sendCmd(OLED1306_DISPLAYALLON_RESUME);

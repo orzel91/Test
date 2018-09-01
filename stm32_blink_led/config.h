@@ -31,8 +31,8 @@
 #define SYSTICK_FREQ 1000
 
 // LEDs
-#define LED1_GPIO GPIOA    // GPIO port to which the LED is connected
-#define LED1_PIN 5    // pin number of the LED
+#define LED1_GPIO GPIOC    // GPIO port to which the LED is connected
+#define LED1_PIN 6    // pin number of the LED
 
 #define LED2_GPIO GPIOC    // GPIO port to which the LED is connected
 #define LED2_PIN 9   // pin number of the LED
@@ -53,8 +53,8 @@
 #define LED3_BB bitband_t m_BITBAND_PERIPH(&LED3_ODR, LED3_PIN)    // bit-band "variable" to directly handle the pin
 
 // DEBUG GPIOs
-#define TEST1_GPIO GPIOC    // GPIO port to which the test gpio is connected
-#define TEST1_PIN 6    // pin number of the test gpio
+#define TEST1_GPIO GPIOD    // GPIO port to which the test gpio is connected
+#define TEST1_PIN 2    // pin number of the test gpio
 
 #define TEST1 (1 << TEST1_PIN)
 #define TEST1_ODR TEST1_GPIO->ODR    // output register for the GPIO
