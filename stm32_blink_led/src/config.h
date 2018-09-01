@@ -138,6 +138,14 @@
 #define OLED_RES_BB bitband_t m_BITBAND_PERIPH(&OLED_RES_ODR, OLED_RES_PIN)
 
 
+// AM2302 - temperature/humadity sensor
+#define AM2302_GPIO GPIOD
+#define AM2302_PIN 0
+
+#define AM2302 (1 << AM2302_PIN)
+#define AM2302_ODR AM2302_GPIO->ODR
+#define AM2302_BB bitband_t m_BITBAND_PERIPH(&AM2302_ODR, AM2302_PIN)
+
 //MCO - The microcontroller clock output
 //#define MCO_GPIO GPIOA
 //#define MCO_PIN 8
