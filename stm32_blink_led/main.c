@@ -20,14 +20,19 @@
 #define ENC_TICKS 0x100
 
 //#define EXTERNAL_CLOCK
-//#define ADC_AVARAGE
+#define ADC_AVARAGE
+
+typedef enum {
+	ACTUAL = 0,
+	PREVIOUS
+}voltageValues;
 
 // Local variables
 volatile uint16_t cnt = 0;
 volatile uint16_t uartFlag = 0;
 volatile uint16_t adcFlag = 0;
 
-uint16_t buffer[ADC_BUFFER_SIZE];
+uint16_t adcBuff[ADC_BUFFER_SIZE];
 
 // GLobal variables
 volatile uint16_t Duty[]= {1599, 1598, 1597, 1596, 1595, 1594, 1593, 1592, 1591, 1590, 1580,
@@ -54,6 +59,7 @@ uint8_t buf1[] = {
 BasicTimer mainTimer;
 
 volatile uint16_t enc_cnt = 0;
+uint16_t voltage[2];
 
 // Local functions declarations
 #ifdef EXTERNAL_CLOCK
@@ -87,9 +93,7 @@ int main(void)
 	memset(&mainTimer, 0, sizeof(mainTimer));
 	UART_putStr("System init...\n");
 
-
 	TIMER_START(mainTimer, 10);
-
 
 	while (!mainTimer.flag) {}
 
@@ -98,14 +102,25 @@ int main(void)
 	OLED_refresh();
 
 	TIMER_START(mainTimer, 1000);
-	bool check = true;
 
 	while(1)
 	{
 		if(mainTimer.flag) {
-			OLED_SetCursor(10, 30);
-			OLED_writeString("Cnt:", Font_11x18, WHITE);
+			OLED_SetCursor(11, 10);
+			OLED_writeString("cnt:    ", Font_11x18, WHITE);
+			OLED_SetCursor(55, 10);
 			OLED_writeInt(TIM2->CNT, 10, Font_11x18, WHITE);
+
+			voltage[ACTUAL] = ADC_filter(adcBuff, ADC_BUFFER_SIZE);
+			voltage[ACTUAL] = (voltage[ACTUAL]*33*100)/4096; // voltage in mV, (ADC/(2^12))*3,3*1000 = V[mV]
+			voltage[ACTUAL] = (voltage[ACTUAL] + voltage[PREVIOUS]) / 2;
+			voltage[PREVIOUS] = voltage[ACTUAL];
+
+			OLED_SetCursor(11, 30);
+			OLED_writeString("vol:    ", Font_11x18, WHITE);
+			OLED_SetCursor(55, 30);
+			OLED_writeInt(voltage[ACTUAL], 10, Font_11x18, WHITE);
+
 			OLED_refresh();
 
 			TIMER_START(mainTimer, 10);
@@ -144,7 +159,7 @@ static void system_init(void)
 
     gpio_pin_cfg(BUTTON1_GPIO, BUTTON1_PIN, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
 
-    LED1_BB = 0; // turn off LED2 by 0V (which is activated by 3V3)
+    LED1_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
     LED2_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
     LED3_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
 
@@ -194,6 +209,23 @@ static void PWMInit(void)
     TIM3->EGR = TIM_EGR_UG;    // Reinitialize the counter and generates an update of the registers
     TIM3->CR1 |= TIM_CR1_ARPE;    // Auto-reload preload enable
     TIM3->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
+
+
+	// Timer4
+
+	TIM4->CCMR2 = TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1;    // set PWM mode 1
+	TIM4->CCMR2 |= TIM_CCMR2_OC4PE;    // Output compare 4 preload enable
+
+	TIM4->CCER |= TIM_CCER_CC4E;    // CC4 channel configured as output: On
+
+	TIM4->PSC = 200-1;    // value of prescaler
+	TIM4->ARR = 40-1;    // value of overload
+	TIM4->CCR4 = (TIM4->ARR / 2);    // value to be compared to the counter CNT, and signaled on OC4 output
+
+	TIM4->EGR = TIM_EGR_UG;    // Reinitialize the counter and generates an update of the registers
+	TIM4->CR1 |= TIM_CR1_ARPE;    // Auto-reload preload enable
+
+	TIM4->CR1 |= TIM_CR1_CEN;    // Counter enable, start counting!
 }
 
 
@@ -216,7 +248,7 @@ static void DMA_init(void)
 
 
     DMA1_Channel1->CPAR = (uint32_t)(&ADC1->DR);
-    DMA1_Channel1->CMAR = (uint32_t)(&buffer);
+    DMA1_Channel1->CMAR = (uint32_t)(&adcBuff);
     DMA1_Channel1->CNDTR = ADC_BUFFER_SIZE;
 
     DMA1_Channel1->CCR = DMA_CCR1_PL_1;    // Channel priority level: High
@@ -234,19 +266,15 @@ static void ADC_init(void)
 {
     uint32_t delay;
 
-    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN | RCC_APB2ENR_ADC2EN;    // turn on clock for ADC1 and ADC2
+    RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;    // turn on clock for ADC1
 
     gpio_pin_cfg(ADC15_GPIO, ADC15_PIN, GPIO_CRx_MODE_CNF_IN_ANALOG_value);    // PC5 configured as alternate function
-    gpio_pin_cfg(ADC14_GPIO, ADC14_PIN, GPIO_CRx_MODE_CNF_IN_ANALOG_value);    // PC4 configured as alternate function
 
     ADC1->CR2 = ADC_CR2_ADON;    // wakes up the ADC1 from Power Down mode
-    ADC2->CR2 = ADC_CR2_ADON;    // wakes up the ADC2 from Power Down mode
-    for(delay = 100000; delay; delay--);    // ADC power-up time - tstab
+    for (delay = 100000; delay; delay--);    // ADC power-up time - tstab
     ADC1->CR2 |= ADC_CR2_CAL;    // Calibration ADC1
-    ADC2->CR2 |= ADC_CR2_CAL;    // Calibration ADC2
-    while((ADC1->CR2 & ADC_CR2_CAL) || (ADC2->CR2 & ADC_CR2_CAL));    // wait to the end of calibration
+    while (ADC1->CR2 & ADC_CR2_CAL);    // wait to the end of calibration
     ADC1->CR2 |= ADC_CR2_CONT;    // Continuous Conversion
-    ADC1->CR1 |= ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_2;    // Dualmode: Regular simultaneous mode only
     ADC1->CR2 |= ADC_CR2_EXTTRIG;    // Conversion on external event enabled
     ADC1->CR2 |= ADC_CR2_EXTSEL_0 | ADC_CR2_EXTSEL_2;    // TIM4_CC4 event set as trigger for start of conversion
     ADC1->CR2 |= ADC_CR2_DMA;    // Direct Memory access mode
@@ -310,7 +338,7 @@ static void externalClockMode1(void)
 static uint16_t ADC_filter(uint16_t *array, uint16_t size)
 {
 	uint16_t i;
-	uint16_t avg = 0;
+	uint32_t avg = 0;
 
 	for(i=0; i<size; i++)
 	{
@@ -318,20 +346,17 @@ static uint16_t ADC_filter(uint16_t *array, uint16_t size)
 		array++;
 	}
 	avg = avg/size;
-	return avg;
+	return (uint16_t)avg;
 }
 #endif
 
 __attribute__ (( interrupt )) void SysTick_Handler(void)
 {
-	LED1_BB ^= 1;
-
 	if (mainTimer.cnt) {
 		if (--mainTimer.cnt == 0) {
 			mainTimer.flag = true;
 		}
 	}
-
 }
 
 __attribute__((interrupt)) void TIM2_IRQHandler(void)
@@ -350,6 +375,7 @@ __attribute__ (( interrupt )) void EXTI15_10_IRQHandler(void)
 	{
 		EXTI->PR = EXTI_PR_PR12;
 
+		TIM2->CNT = 0;
 
 	}
 }
