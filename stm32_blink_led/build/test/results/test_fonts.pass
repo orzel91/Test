@@ -1,0 +1,17 @@
+---
+:source:
+  :path: test/ssd1306
+  :file: test_fonts.c
+:successes: []
+:failures: []
+:ignores:
+- :test: test_fonts_NeedToImplement
+  :line: 14
+  :message: Need to Implement fonts
+:counts:
+  :total: 1
+  :passed: 0
+  :failed: 0
+  :ignored: 1
+:stdout: []
+:time: 0.0010765289999881134

@@ -1,0 +1,17 @@
+---
+:source:
+  :path: test/ssd1306
+  :file: test_oled1306.c
+:successes: []
+:failures: []
+:ignores:
+- :test: test_oled1306_NeedToImplement
+  :line: 23
+  :message: Need to Implement oled1306
+:counts:
+  :total: 1
+  :passed: 0
+  :failed: 0
+  :ignored: 1
+:stdout: []
+:time: 0.000998148000007859
