@@ -1,6 +1,0 @@
----
-- unity.h
-- uart.h
-- mock_gpio.h
-- fake_itoa.h
-- build/temp/_test_uart.c

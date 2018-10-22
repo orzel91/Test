@@ -1,5 +1,0 @@
----
-- unity.h
-- spi.h
-- mock_gpio.h
-- build/temp/_test_spi.c
