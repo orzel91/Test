@@ -13,12 +13,10 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#include "hdr/hdr_bitband.h"
-#include "gpio/gpio.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include "inc/stm32f10x.h"
 #include "hdr/hdr_bitband.h"
-#include "gpio/gpio.h"
 
 /*
 +=============================================================================+
