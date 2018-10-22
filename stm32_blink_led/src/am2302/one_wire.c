@@ -16,11 +16,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "inc/stm32f10x.h"
+#include "../inc/stm32f10x.h"
 #include "../config.h"
-#include "hdr/hdr_rcc.h"
-#include "hdr/hdr_gpio.h"
-#include "gpio/gpio.h"
+#include "../hdr/hdr_rcc.h"
+#include "../hdr/hdr_gpio.h"
+#include "../gpio/gpio.h"
 
 
 /*
@@ -48,8 +48,9 @@
 
 void ONE_WIRE_init(void)
 {
-	gpio_pin_cfg(AM2302_GPIO, AM2302_PIN, GPIO_CRx_MODE_CNF_OUT_OD_10M_value); // Set one wire pin
-	AM2302_BB = 0; // Set pin in floating state
+	gpio_pin_cfg(AM2302_OUT_GPIO, AM2302_OUT_PIN, GPIO_CRx_MODE_CNF_OUT_OD_10M_value);
+	gpio_pin_cfg(AM2302_IN_GPIO, AM2302_IN_PIN, GPIO_CRx_MODE_CNF_IN_FLOATING_value);
+	AM2302_OUT_BB = 1; // Set pin in floating state
 }
 
 /*
@@ -60,7 +61,7 @@ void ONE_WIRE_init(void)
 
 void ONE_WIRE_sendStart (void)
 {
-	AM2302_BB = 0; // Pull down out of pin
+	AM2302_OUT_BB = 0; // Pull down out of pin
 }
 
 

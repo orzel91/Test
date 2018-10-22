@@ -53,8 +53,8 @@
 #define LED3_BB bitband_t m_BITBAND_PERIPH(&LED3_ODR, LED3_PIN)    // bit-band "variable" to directly handle the pin
 
 // DEBUG GPIOs
-#define TEST1_GPIO GPIOD    // GPIO port to which the test gpio is connected
-#define TEST1_PIN 2    // pin number of the test gpio
+#define TEST1_GPIO GPIOB    // GPIO port to which the test gpio is connected
+#define TEST1_PIN 10    // pin number of the test gpio
 
 #define TEST1 (1 << TEST1_PIN)
 #define TEST1_ODR TEST1_GPIO->ODR    // output register for the GPIO
@@ -139,12 +139,16 @@
 
 
 // AM2302 - temperature/humadity sensor
-#define AM2302_GPIO GPIOD
-#define AM2302_PIN 0
+#define AM2302_OUT_GPIO GPIOD
+#define AM2302_OUT_PIN 2
 
-#define AM2302 (1 << AM2302_PIN)
-#define AM2302_ODR AM2302_GPIO->ODR
-#define AM2302_BB bitband_t m_BITBAND_PERIPH(&AM2302_ODR, AM2302_PIN)
+#define AM2302_OUT (1 << AM2302_OUT_PIN)
+#define AM2302_OUT_ODR AM2302_OUT_GPIO->ODR
+#define AM2302_OUT_BB bitband_t m_BITBAND_PERIPH(&AM2302_OUT_ODR, AM2302_OUT_PIN)
+
+#define AM2302_IN_GPIO GPIOC
+#define AM2302_IN_PIN 10
+
 
 //MCO - The microcontroller clock output
 //#define MCO_GPIO GPIOA

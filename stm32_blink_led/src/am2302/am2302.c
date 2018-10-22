@@ -11,7 +11,16 @@
 | includes
 +=============================================================================+
 */
-
+#include "one_wire.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include "../inc/stm32f10x.h"
+#include "../config.h"
+#include "../hdr/hdr_rcc.h"
+#include "../hdr/hdr_gpio.h"
+#include "../gpio/gpio.h"
 
 
 /*
@@ -36,7 +45,10 @@
 | global functions
 +=============================================================================+
 */
-
+void AM2302_init(void)
+{
+	ONE_WIRE_init();
+}
 
 
 /*

@@ -13,6 +13,7 @@
 #include "spi.h"
 #include "ssd1306/oled1306.h"
 #include "ssd1306/fonts.h"
+#include "am2302/am2302.h"
 
 
 #define PWM1_FREQ 10000
@@ -89,6 +90,7 @@ int main(void)
 	UART_init(BAUD_RATE);
 	AT_commandInit();
 	OLED_init();
+	AM2302_init();
 
 	memset(&mainTimer, 0, sizeof(mainTimer));
 	UART_putStr("System init...\n");
