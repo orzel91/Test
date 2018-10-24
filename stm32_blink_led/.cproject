@@ -21,18 +21,54 @@
 							<builder autoBuildTarget="all" cleanBuildTarget="clean" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="org.eclipse.cdt.build.core.settings.default.builder.544513446" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
 							<tool id="org.eclipse.cdt.build.core.settings.holder.libs.1383680542" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
 							<tool id="org.eclipse.cdt.build.core.settings.holder.1858555280" name="Assembly" superClass="org.eclipse.cdt.build.core.settings.holder">
+								<option id="org.eclipse.cdt.build.core.settings.holder.undef.incpaths.1779537943" name="Undefined Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.undef.incpaths" valueType="undefIncludePath">
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/uart"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/gpio"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/am2302"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/spi"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/system"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/ssd1306"/>
+								</option>
+								<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.2068081194" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/src"/>
+								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.308324197" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 							</tool>
 							<tool id="org.eclipse.cdt.build.core.settings.holder.2034116875" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder">
+								<option id="org.eclipse.cdt.build.core.settings.holder.undef.incpaths.1975682036" name="Undefined Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.undef.incpaths" valueType="undefIncludePath">
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/uart"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/gpio"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/am2302"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/spi"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/system"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/ssd1306"/>
+								</option>
+								<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.2046847241" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/src"/>
+								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.45790384" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 							</tool>
 							<tool id="org.eclipse.cdt.build.core.settings.holder.916184679" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder">
+								<option id="org.eclipse.cdt.build.core.settings.holder.undef.incpaths.2123375652" name="Undefined Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.undef.incpaths" valueType="undefIncludePath">
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/uart"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/gpio"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/am2302"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/spi"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/system"/>
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/ssd1306"/>
+								</option>
+								<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1784831348" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/home/jarek/workspace/Test/stm32_blink_led/src"/>
+								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.721239332" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 							</tool>
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="test" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="out/test_build" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
