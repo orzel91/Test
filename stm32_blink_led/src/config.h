@@ -148,19 +148,6 @@
 #define AM2302_IN_PIN 10
 
 
-//MCO - The microcontroller clock output
-//#define MCO_GPIO GPIOA
-//#define MCO_PIN 8
-
-#define TIMER_START(timer, value) 	{timer.cnt = value; timer.flag = false;}
-#define TIMER_STOP(timer)			{timer.cnt = 0; timer.flag = false;}
-
-
-typedef struct {
-	uint16_t cnt;
-	bool flag;
-} BasicTimer;
-
 
 /*
 +=============================================================================+

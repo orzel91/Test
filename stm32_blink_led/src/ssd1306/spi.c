@@ -56,13 +56,10 @@ typedef struct {
 } SPI_CmdPointer;
 
 
-/*******************  Global variables  *******************/
+
+/*******************  Module variables  *******************/
 static SPI_CmdPointer command;
 static SPI_DataPointer queue;
-
-
-/*******************  Local variables  *******************/
-
 
 
 /*******************  Private function declarations  *******************/
@@ -123,7 +120,6 @@ void SPI_sendData(uint8_t* src, uint16_t cnt)
 		queue.buffer[queue.head].cnt = cnt;
 		queue.buffer[queue.head].type = DATA;
 	}
-	SPI_checkDmaStatus();
 }
 
 // Send command
@@ -153,7 +149,6 @@ void SPI_sendCmd(uint8_t cmd)
 		queue.buffer[queue.head].cnt = 1;
 		queue.buffer[queue.head].type = COMMAND;
 	}
-	SPI_checkDmaStatus();
 }
 
 void SPI_checkDmaStatus(void)
@@ -161,17 +156,11 @@ void SPI_checkDmaStatus(void)
 	uint16_t tmpTail = 0;
 
 	// check if DMA is not sending
-	if (!queue.dmaState ) {
+	if ( (!queue.dmaState) && (!(SPI1->SR & SPI_SR_BSY)) ) {
 
 		// check if there is some messsage in buffer
 		if (queue.tail != queue.head) {
 			tmpTail = (queue.tail + 1) & SPI_MESSAGE_QUEQUE_MASK;
-
-			// check if the next message is the same type, and if the message was send - D/C pin set
-			if ( queue.buffer[queue.tail].type != queue.buffer[tmpTail].type
-					&& (SPI1->SR & SPI_SR_BSY) ) {
-				return;
-			}
 
 			queue.tail = tmpTail;
 
@@ -193,9 +182,7 @@ void SPI_checkDmaStatus(void)
 			DMA1_Channel3->CCR |= DMA_CCR3_EN; // Channel enabled
 
 		} else {
-			if (!(SPI1->SR & SPI_SR_BSY)) {
-				SPI1_NSS_BB = 1;
-			}
+			SPI1_NSS_BB = 1;
 		}
 	}
 }
@@ -219,8 +206,6 @@ void DMA1_Channel3_IRQHandler(void)
 			command.tail = (command.tail +1) & SPI_COMMAND_MASK;
 		}
 		queue.dmaState = IDLE;
-
-		SPI_checkDmaStatus();
 	}
 }
 

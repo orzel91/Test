@@ -3,7 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 #include "mock_gpio.h"
+#include "mock_system.h"
+#include "mock_at_commands.h"
 #include "fake_itoa.h"
+
 
 
 void setUp(void)

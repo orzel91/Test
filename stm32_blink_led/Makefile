@@ -48,7 +48,7 @@ AS_DEFS =
 
 # include directories (absolute or relative paths to additional folders with
 # headers, current folder is always included)
-INC_DIRS = src/gpio src/uart src/ssd1306 src/am2302 src/system
+INC_DIRS = src/gpio src/uart src/ssd1306 src/am2302 src/system src/encoder src/led src/measure src/app
 
 # library directories (absolute or relative paths to additional folders with
 # libraries)
@@ -60,7 +60,7 @@ LIBS =
 
 # additional directories with source files (absolute or relative paths to
 # folders with source files, current folder is always included)
-SRCS_DIRS = src src/gpio src/uart src/ssd1306 src/am2302 src/system
+SRCS_DIRS = src src/gpio src/uart src/ssd1306 src/am2302 src/system src/encoder src/led src/measure src/app
 
 # extension of C++ files
 CXX_EXT = cpp

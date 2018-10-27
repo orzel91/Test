@@ -102,16 +102,6 @@ void OLED_init(void)
 
 }
 
-void OLED_sendData(void)
-{
-
-}
-/*
-void OLED_sendCmd(uint8_t cmd)
-{
-
-}*/
-
 // Fill the whole screen with the given color
 void OLED_fill(OLED1306_COLOR color)
 {

@@ -22,7 +22,6 @@ typedef struct {
 
 // Declarations of functions
 static int16_t at_ledService(uint16_t inout, char* params);
-static void parse_uart_data( char * pBuf );
 
 // Local variables
 static ATcommand commands[AT_CNT] = {
@@ -30,11 +29,7 @@ static ATcommand commands[AT_CNT] = {
 };
 
 
-void AT_commandInit(void) {
-	register_uart_str_rx_event_callback(parse_uart_data);
-}
-
-static void parse_uart_data( char * pBuf )
+void parse_uart_data(char* pBuf)
 {
 	int8_t (*_at_srv)(uint8_t inout, char * data);
 	char * cmd_wsk;
@@ -54,10 +49,10 @@ static void parse_uart_data( char * pBuf )
 					if (commands[i].name) {
 						_at_srv = (void *)( commands[i].at_service );
 						if( _at_srv) {
-							if( _at_srv(0, rest) < 0 ) UART_putStr("ERROR\r\n");
+							if( _at_srv(0, rest) < 0 ) uart_putStr("ERROR\r\n");
 						}
 					}
-					UART_putStr("\r\n");
+					uart_putStr("\r\n");
 					break;
 				}
 			}
@@ -77,9 +72,9 @@ static void parse_uart_data( char * pBuf )
 						_at_srv = (void *)( commands[i].at_service );
 
 						if( _at_srv && ! _at_srv( 1, rest ) ) {
-							UART_putStr("OK\r\n");
+							uart_putStr("OK\r\n");
 						} else {
-							UART_putStr("ERROR\r\n");
+							uart_putStr("ERROR\r\n");
 						}
 					}
 					break;
@@ -89,7 +84,7 @@ static void parse_uart_data( char * pBuf )
 
 	} else {
 
-		if( 0 == pBuf[0] ) UART_putStr("\r\n");
+		if( 0 == pBuf[0] ) uart_putStr("\r\n");
 		else {
 			for(i=0;i<AT_CNT;i++) {
 				// check string if it is the same as in AT command table - if yes, it will return zero
@@ -106,7 +101,7 @@ static void parse_uart_data( char * pBuf )
 		}
 	}
 
-	if( AT_CNT == i ) UART_putStr("ERROR\r\n");
+	if( AT_CNT == i ) uart_putStr("ERROR\r\n");
 }
 
 
@@ -125,18 +120,18 @@ static int16_t at_ledService(uint16_t inout, char* params)
 			}
 		}
 
-		UART_putStr("LED: ");
+		uart_putStr("LED: ");
 
 		if( LED3_ODR & LED3 ) {
-			UART_putInt(1,10);
+			uart_putInt(1,10);
 		} else {
-			UART_putInt(0,10);
+			uart_putInt(0,10);
 		}
 
-		UART_putStr("\r\n");
+		uart_putStr("\r\n");
 
 	} else if( 2 == inout ) {
-		UART_putStr("AT+LED = (0-1)\r\n");
+		uart_putStr("AT+LED = (0-1)\r\n");
 	}
 	return 0;
 }

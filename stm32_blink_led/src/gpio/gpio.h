@@ -61,6 +61,7 @@ enum {
 
 void gpio_init(void);
 void gpio_pin_cfg(GPIO_TypeDef *port_ptr, uint32_t pin, uint32_t mode_cnf_value);
+void gpio_debugGpioInit(void);
 
 /******************************************************************************
 * END OF FILE

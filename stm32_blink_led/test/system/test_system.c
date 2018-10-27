@@ -1,5 +1,6 @@
 #include "unity.h"
 #include "system.h"
+#include "mock_app.h"
 
 void setUp(void)
 {

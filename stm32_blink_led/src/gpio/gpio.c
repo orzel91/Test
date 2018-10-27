@@ -27,11 +27,9 @@
 */
 
 #include <stdint.h>
-
 #include "../inc/stm32f10x.h"
-
 #include "../hdr/hdr_gpio.h"
-
+#include "../config.h"
 #include "gpio.h"
 
 /*
@@ -80,24 +78,6 @@ void gpio_init(void)
 	GPIOE->ODR = 0;
 }
 
-/*------------------------------------------------------------------------*//**
-* \brief Configures pin.
-* \details Configures one pin in one port.
-*
-* \param [in] port_ptr points to the configuration structure of desired port
-* \param [in] pin selects one pin, [0,15]
-* \param [in] mode_cnf_value is a value of MODE and CNF which will be set for
-* selected pin, {GPIO_CRx_MODE_CNF_IN_ANALOG_value,
-* GPIO_CRx_MODE_CNF_IN_FLOATING_value, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value,
-* GPIO_CRx_MODE_CNF_OUT_PP_2M_value, GPIO_CRx_MODE_CNF_OUT_PP_10M_value,
-* GPIO_CRx_MODE_CNF_OUT_PP_50M_value, GPIO_CRx_MODE_CNF_OUT_OD_2M_value,
-* GPIO_CRx_MODE_CNF_OUT_OD_10M_value, GPIO_CRx_MODE_CNF_OUT_OD_50M_value,
-* GPIO_CRx_MODE_CNF_ALT_PP_2M_value, GPIO_CRx_MODE_CNF_ALT_PP_10M_value,
-* GPIO_CRx_MODE_CNF_ALT_PP_50M_value, GPIO_CRx_MODE_CNF_ALT_OD_2M_value,
-* GPIO_CRx_MODE_CNF_ALT_OD_10M_value, GPIO_CRx_MODE_CNF_ALT_OD_50M_value} or
-* use m_GPIO_MODE_CNF_value(mode, cnf) macro
-*//*-------------------------------------------------------------------------*/
-
 void gpio_pin_cfg(GPIO_TypeDef *port_ptr, uint32_t pin, uint32_t mode_cnf_value)
 {
 	volatile uint32_t *cr_ptr;
@@ -117,6 +97,13 @@ void gpio_pin_cfg(GPIO_TypeDef *port_ptr, uint32_t pin, uint32_t mode_cnf_value)
 	cr_value |= (mode_cnf_value << (pin * 4));	// save new MODE and CNF value for desired pin
 
 	*cr_ptr = cr_value;						// save localized value to CRL / CRL
+}
+
+void gpio_debugGpioInit(void)
+{
+    gpio_pin_cfg(TEST1_GPIO, TEST1_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
+
+    TEST1_BB = 0; // Set GPIO to Low
 }
 
 /*
