@@ -56,7 +56,7 @@ void app_init(void)
 {
     gpio_init();
     led_init();
-	Encoder_init();
+	encoder_init();
 	measure_init();
 	uart_init();
 	OLED_init();

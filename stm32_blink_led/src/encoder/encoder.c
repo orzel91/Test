@@ -38,14 +38,35 @@ volatile uint16_t enc_cnt = 0;
 | local functions' declarations
 +=============================================================================+
 */
-
+static void encoder_buttonInit(void);
+static void encoder_encoderHwInit(void);
 
 /*
 +=============================================================================+
 | global functions
 +=============================================================================+
 */
-void Encoder_init(void)
+void encoder_init(void)
+{
+	encoder_encoderHwInit();
+	encoder_buttonInit();
+}
+
+/*
++=============================================================================+
+| local functions
++=============================================================================+
+*/
+static void encoder_buttonInit(void)
+{
+    // SW button on encoder
+    AFIO->EXTICR[3] = AFIO_EXTICR4_EXTI12_PC; // source input for EXTIx external interrupt
+    EXTI->IMR = EXTI_IMR_MR12;    // configure interrupt mask
+    EXTI->FTSR =  EXTI_FTSR_TR12;    // setting trigerring by falling edge
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
+}
+
+static void encoder_encoderHwInit(void)
 {
     // Timer 2
 
@@ -67,20 +88,7 @@ void Encoder_init(void)
 
     NVIC_ClearPendingIRQ(TIM2_IRQn);
     NVIC_EnableIRQ(TIM2_IRQn);
-
-    // SW button on encoder
-    AFIO->EXTICR[3] = AFIO_EXTICR4_EXTI12_PC; // source input for EXTIx external interrupt
-    EXTI->IMR = EXTI_IMR_MR12;    // configure interrupt mask
-    EXTI->FTSR =  EXTI_FTSR_TR12;    // setting trigerring by falling edge
-    NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
-
-/*
-+=============================================================================+
-| local functions
-+=============================================================================+
-*/
-
 
 /*
 +=============================================================================+
