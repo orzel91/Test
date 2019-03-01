@@ -72,7 +72,6 @@ static void encoder_encoderHwInit(void)
 
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    // turn on clock for Timer2
 
-    gpio_pin_cfg(PWM2_GPIO, PWM2_PIN, GPIO_CRx_MODE_CNF_ALT_PP_2M_value);    // PA6 configured as alternate function
 
     gpio_pin_cfg(ENC_TI1_GPIO, ENC_TI1_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PA0 configured as input floating
 	gpio_pin_cfg(ENC_TI2_GPIO, ENC_TI2_PIN, GPIO_CRx_MODE_CNF_IN_PULL_U_D_value);    // PA1 configured as input floating

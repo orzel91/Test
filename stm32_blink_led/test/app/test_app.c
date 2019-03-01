@@ -8,6 +8,7 @@
 #include "mock_oled1306.h"
 #include "mock_am2302.h"
 #include "mock_system.h"
+#include "mock_fonts.h"
 
 void setUp(void)
 {

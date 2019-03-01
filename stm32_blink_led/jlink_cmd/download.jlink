@@ -1,0 +1,9 @@
+device STM32F103RB
+si 1
+speed 4000
+r
+h
+erase
+loadbin /home/jarek/workspace/Test/stm32_blink_led/out/stm32_blink_led.bin,0x08000000
+verifybin /home/jarek/workspace/Test/stm32_blink_led/out/stm32_blink_led.bin,0x08000000
+q

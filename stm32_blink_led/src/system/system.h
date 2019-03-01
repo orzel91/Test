@@ -14,7 +14,7 @@
 | defines
 +=============================================================================+
 */
-#define MAX_TASK 4
+#define MAX_TASK 5
 
 #define TIMER_START(timer, value) 	{timer.cnt = value; timer.flag = false;}
 #define TIMER_STOP(timer)			{timer.cnt = 0; timer.flag = false;}

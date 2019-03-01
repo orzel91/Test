@@ -52,9 +52,9 @@ void led_init(void)
 	gpio_pin_cfg(LED2_GPIO, LED2_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
     gpio_pin_cfg(LED3_GPIO, LED3_PIN, GPIO_CRx_MODE_CNF_OUT_PP_2M_value);
 
-    LED1_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
-    LED2_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
-    LED3_BB = 1; // turn off LED2 by 3V3 (which is activated by 0V)
+    LED1_BB = 0; // turn off LED2 by 3V3 (which is activated by 0V)
+    LED2_BB = 0; // turn off LED2 by 3V3 (which is activated by 0V)
+    LED3_BB = 0; // turn off LED2 by 3V3 (which is activated by 0V)
 
     led_pwmInit();
     led_initDMA();
@@ -80,7 +80,7 @@ static void led_pwmInit(void)
     TIM1->CCER |= TIM_CCER_CC1E;    // CC1 channel configured as output: On
     TIM1->BDTR = TIM_BDTR_MOE;    // Main output enable
 
-    // PWM freq = (PSC*ARR)/CPU_FREQ
+    // PWM freq = CPU_FREQ / ( (PSC+1)*(ARR+1) )
     TIM1->PSC = 100;    // value of prescaler
     TIM1->ARR = 1600;    // value of overload
     TIM1->CCR1 = TIM1->ARR;    // value to be compared to the counter CNT, and signaled on OC1 output

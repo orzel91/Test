@@ -15,13 +15,13 @@
 | Defines
 +=============================================================================*
 */
-#define BAUD_RATE 460800
+#define BAUD_RATE 921600
 
 #define UART_RX_BUF_SIZE 64
 #define UART_RX_CIRC_BUF_SIZE 16
 #define UART_RX_BUF_MASK (UART_RX_BUF_SIZE - 1)
 
-#define UART_TX_BUF_SIZE 64
+#define UART_TX_BUF_SIZE 512
 #define UART_TX_BUF_MASK (UART_TX_BUF_SIZE - 1)
 
 

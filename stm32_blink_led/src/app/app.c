@@ -79,18 +79,21 @@ static void app_task(void)
 
 	if (displayTimer.flag) {
 		OLED_SetCursor(11, 10);
-		OLED_writeString("cnt:    ", Font_11x18, WHITE);
-		OLED_SetCursor(55, 10);
-		OLED_writeInt(TIM2->CNT, 10, Font_11x18, WHITE);
+		OLED_writeString("T=    ", Font_11x18, WHITE);
+		OLED_SetCursor(38, 10);
+		OLED_writeInt((AM2302_getTemp()/10), 10, Font_11x18, WHITE);
+		OLED_writeString(",", Font_11x18, WHITE);
+		OLED_writeInt((AM2302_getTemp()%10), 10, Font_11x18, WHITE);
+		OLED_writeString("C", Font_11x18, WHITE);
 
 		OLED_SetCursor(11, 30);
-		OLED_writeString("vol:    ", Font_11x18, WHITE);
-		OLED_SetCursor(55, 30);
-		OLED_writeInt(measure_getVoltage(), 10, Font_11x18, WHITE);
+		OLED_writeString("H=    ", Font_11x18, WHITE);
+		OLED_SetCursor(38, 30);
+		OLED_writeInt((AM2302_getHumad()/10), 10, Font_11x18, WHITE);
+		OLED_writeString(",", Font_11x18, WHITE);
+		OLED_writeInt((AM2302_getHumad()%10), 10, Font_11x18, WHITE);
+		OLED_writeString("%", Font_11x18, WHITE);
 
-		uart_putStr("Voltage: ");
-		uart_putInt(measure_getVoltage(), 10);
-		uart_putStr("\n");
 
 		OLED_refresh();
 		TIMER_START(displayTimer, DISLPAY_REFRESH_TIME);

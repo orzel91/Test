@@ -67,14 +67,9 @@
 #define PWM1_GPIO GPIOA    // GPIO port of PWM1 output
 #define PWM1_PIN 8    // pin number of PWM1 output
 
-#define PWM2_GPIO GPIOA    // GPIO port of PWM2 output
-#define PWM2_PIN 6    // pin number of PWM2 output
-
 #define PWM3_GPIO GPIOB    // GPIO port of PWM3 output
 #define PWM3_PIN 9    // pin number of PWM3 output
 
-#define TI2_GPIO GPIOA    // GPIO port to which the external clock TI2 is connected
-#define TI2_PIN 0    // pin number of the external clock TI2
 
 // ADC
 #define ADC15_GPIO GPIOC    // GPIO port for ADC input
@@ -137,15 +132,13 @@
 
 
 // AM2302 - temperature/humadity sensor
-#define AM2302_OUT_GPIO GPIOD
-#define AM2302_OUT_PIN 2
+#define AM2302_GPIO GPIOA
+#define AM2302_PIN 6
 
-#define AM2302_OUT (1 << AM2302_OUT_PIN)
-#define AM2302_OUT_ODR AM2302_OUT_GPIO->ODR
-#define AM2302_OUT_BB bitband_t m_BITBAND_PERIPH(&AM2302_OUT_ODR, AM2302_OUT_PIN)
 
-#define AM2302_IN_GPIO GPIOC
-#define AM2302_IN_PIN 10
+#define AM2302_OUT (1 << AM2302_PIN)
+#define AM2302_OUT_ODR AM2302_GPIO->ODR
+#define AM2302_OUT_BB bitband_t m_BITBAND_PERIPH(&AM2302_OUT_ODR, AM2302_PIN)
 
 
 
